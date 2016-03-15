@@ -179,3 +179,60 @@ proxy_set_header Connection close;
 2 proxy_redirect default;
 3 proxy_redirect off;
 ```
+ + redirect，匹配“Location”头域值的字符串，支持变量的使用和正则表达式。  
+ + replacement，用于替换redirect变量内容的字符串，支持变量的使用。  
+　　对于第1个结构，假设被代理服务器返回的响应头中“Location”头域为：  
+`Location: http://localhost:8081/proxy/some/uri/`  
+　　该指令设置为：　　
+`proxy_redirect http://localhost:8081/proxy/ http://myweb/frontend/;`  
+　　Nginx服务器会将“Location”头域的信息更改为：  
+`Location: http://myweb/frontend//some/uri/`  
+　　结构２使用default，代表使用location块的uri变量作为replacement，并使用proxy_pass变量作为redirect。下面两段配置的效果是相同的。  
+```
+#配置1
+location /server/
+{
+    proxy_pass http://proxyserver/source/;
+    proxy_redirect default;
+}
+#配置2
+location /server/
+{
+    proxy_pass http://proxyserver/source/;
+    proxy_rediret http://proxyserver/source/ /server/;
+}
+```  
+　　使用结构３可以将当前作用域下所有的proxy_redirect指令配置全部设置为无效。
+
+- proxy_intercept_errors指令  
+该指令用于配置一个状态是开启还是关闭。在开启该状态时，如果被合理的服务器返回的HTTP状态码为400或者大于400，则Nginx服务器使用自己定义的错误页（使用error_pasge指令）；如果关闭该指令，Nginx服务器直接将被代理服务器返回的HTTP状态返回给客户端。  
+语法： `proxy_intercept_errors on | off`  
+
+- proxy_headers_hash_max_size指令  
+该指令用于配置存放HTTP报文头的哈希表的最大容量。  
+语法： `proxy_headers_hash_max_size size;`  
+ + size，HTTP报文头哈希表的容量上限，默认为512个字符。  
+
+- proxy_headers_hash_bucket_size指令  
+该指令用于配置存放HTTP报文头的哈希表容量的单位大小。  
+语法： `proxy_headers_hash_bucket_size size;`  
+ + size，设置的容量，默认为64个字符。  
+
+- proxy_next_upstream指令  
+在配置Nginx服务器反向代理功能时，如果使用upstream指令一组服务器作为被代理服务器，服务器组中各服务器的访问规则遵循upstream指令配置的轮循规则，同时可以使用该指令配置在发生哪些异常情况时，将请求顺次交由下一个组内服务器处理。  
+语法： `proxy_next_upstream status ...;`  
+ + status，设置的服务器返回状态，可以是一个或多个。这些状态包括：  
+   - error，在建立连接、向被代理的服务器发送请求或者读取响应头时服务器发生连接错误。  
+   - timeout，在建立连接、向被代理的服务器发送请求或者读取响应头时服务器发生连接超时。
+   - invalid_header，被代理服务器返回的响应头为空或者无效。
+   - http_500|http_502|http_503|http_504|http_404，被代理的服务器返回500、502、503、504或者404状态代码。
+   - off，无法将请求发送给被代理的服务器。
+   
+- proxy_ssl_session_reuse指令  
+该指令用于配置是否使用基于SSL安全协议的会话连接（“https://”）被代理的服务器。  
+语法： `proxy_ssl_session_reuser on | off;`  
+　　默认为开启（on）状态。如果我们在错误日志中发现“SSL3_GET_FINISHED:digest check failed”的情况，可以将该指令配置为关闭“off”状态。  
+
+ 
+
+
