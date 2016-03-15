@@ -4,7 +4,7 @@
 
 - resolver 指令  
 该指令用于指定DNS服务器的IP地址  
-语法： **`resolver address ... [valid=time];`**  
+语法： `resolver address ... [valid=time];`  
  + *address*, DNS服务器的IP地址。如果不指定端口号，默认使用53端口。  
  + *time*， 设置数据包在网络中的有效时间。  
 例：  
@@ -12,19 +12,19 @@
  
 - resolver_timeout指令  
 该指令用于设置DNS服务器域名解析超时时间。  
-语法： **`resolver_time time;`**
+语法： `resolver_time time;`
 
 - proxy_pass指令  
 该指令用于设置代理服务器的协议和地址  
 
 Tips: 在server块中，不要出现server_name指令，即不要设置虚拟主机的名称或IP。  
 
-## 反向代理
+## 反向代理的基本设置的21个指令
 作用域： http块、server块、location块  
 
-- proxy_pass指令  
+- 1.proxy_pass指令  
 该指令用来设置被代理服务器的地址，可以是主机名称、IP地址加端口号的形式。  
-语法： **`proxy_pass URL;`**  
+语法： `proxy_pass URL;`  
  + URL为要设置的被代理服务器的地址，包含传输协议、主机名称或IP地址加端口号、URI等要素。传输协议通过是“http”或者“https”。指令同时还接受以“unix”开始的UNIX-domain套接字路径。  
 例：  
 ```
@@ -95,29 +95,29 @@ servser
 ```
 　　在该配置实例中，proxy_pass指令的URL包含了URL“/loc”。如果客户端仍然使用“http://www.myweb.name/server ”发起请求，Nginx服务器将会把地址转向“http://192.168.1.1/loc/ ”  
 
-- proxy_hide_header指令  
+- 2.proxy_hide_header指令  
 该指令用于设置Nginx服务器在发送HTTP响应时，隐藏一些头域信息。  
-语法：  **`proxy_hide_header field;`**  
+语法：  `proxy_hide_header field;`  
  + field为需要隐藏的头域。  
 
-- proxy_pass_header指令  
+- 3.proxy_pass_header指令  
 默认情况下，Nginx服务器在发送响应报文时，报文头中不包含“Date”、“Server”、“X-Accel”等来自被代理服务器的头域信息。该指令可以设置这些头域信息以被发送。  
-语法：  **`proxy_pass_herder field;`**  
+语法：  `proxy_pass_herder field;`  
  + fidle为需要发送的头域。
 
-- proxy_pass_request_body指令  
+- 4.proxy_pass_request_body指令  
 该指令用于配置是否将客户端请求的请求体发送给代理服务器。  
-语法：  **`proxy_pass_request_body on | off`**  
+语法：  `proxy_pass_request_body on | off`  
 默认设置为开启（on）。
 
-- proxy_pass_request_headers指令  
+- 5.proxy_pass_request_headers指令  
 该指令用于配置是否将客户端请求的请求头发送给代理服务器。  
-语法：  **`proxy_pass_request_headers on | off;`**  
+语法：  `proxy_pass_request_headers on | off;`  
 默认设置为开启（on）。
 
-- proxy_set_header指令
+- 6.proxy_set_header指令
 该指令可以更改Nginx服务器接收到的客户端请求的请求头信息，然后将新的请求头发送给被代理的服务器。  
-语法：  **`proxy_set_header field value;`**  
+语法：  `proxy_set_header field value;`  
  + field，要更改的信息所在的头域。
  + value，更改的值，支持使用文本、变量或者变量的组合。  
 默认情况下，该指令的设置为：
@@ -126,52 +126,52 @@ proxy_set_header Host $proxy_host;
 proxy_set_header Connection close;
 ```
 
-- proxy_set_body指令  
+- 7.proxy_set_body指令  
 该指令可以更改Nginx服务器接收到的客户端请求的请求体信息，然后将新的请求体发送给被代理的服务器。  
-语法：  **`proxy_set_body value;`**  
+语法：  `proxy_set_body value;`  
  + value， 要更改的信息，支持使用文本、变量或者变量的组合。
 
-- proxy_bind指令  
+- 8.proxy_bind指令  
 强制将与代理主机的连接绑定到指定的IP地址。通俗来讲就是，在配置了多个基于名称或者基于IP的主机的情况下，如果我们希望代理连接由指定的主机处理，就可以使用该指令进行配置。  
-语法：  **`proxy_bind address;`**  
+语法：  `proxy_bind address;`  
  + address，指定主机的IP地址。
 
-- proxy_connect_timeout指令  
+- 9.proxy_connect_timeout指令  
 该指令配置Nginx服务器与后端被代理服务器尝试建立连接的超时时间。  
-语法：  **`proxy_connect_timeout time;`**  
+语法：  `proxy_connect_timeout time;`  
  + time，设置的超时时间，默认为60s。
 
-- proxy_read_timeout指令  
+- 10.proxy_read_timeout指令  
 该指令配置Nginx服务器向后端被代理服务器（组）发出read请求后，等待响应的超时时间。  
-语法：  **`proxy_read_timeout time;`**  
+语法：  `proxy_read_timeout time;`  
  + time，设置的超时时间，默认为60s。
 
-- proxy_send_timeout指令  
+- 11.proxy_send_timeout指令  
 该指令配置Nginx服务器向后端被代理服务器（组）发出write请求后，等待响应的超时时间。  
-语法：  **`proxy_send_timeout time;`**  
+语法：  `proxy_send_timeout time;`  
  + time，设置的超时时间，默认为60s。
 
-- proxy_http_version指令  
+- 12.proxy_http_version指令  
 该指令用于设置Nginx服务器提供代理服务的HTTP协议版本。  
-语法：  **`proxy_http_version 1.0 | 1.1;`**  
+语法：  `proxy_http_version 1.0 | 1.1;`  
 默认设置为1.0版本。
 
-- proxy_method指令  
+- 13.proxy_method指令  
 该指令用于设置Nginx服务器请求被代理服务器时使用的请求方法，一般为POST或者GET。设置了该指令，客户端的请求方法将被忽略。  
-语法：  **`proxy_method method;`**  
+语法：  `proxy_method method;`  
  + method，可以设置为POST或者GET，注意不加引号。
  
-- proxy_ignore_client_abort指令  
+- 14.proxy_ignore_client_abort指令  
 该指令用于设置在客户端中断网络请求时，Nginx服务器是否中断对被代理服务器的请求。  
-语法：  **`proxy_ignore_client_abort on | off;`**  
+语法：  `proxy_ignore_client_abort on | off;`  
 默认设置为off，当客户端中断网络请求时，Nginx服务器中断对被代理服务器的请求。
 
-- proxy_ignore_headers指令  
+- 15.proxy_ignore_headers指令  
 该指令用于设置一些HTTP响应头中的头域，Nginx服务器接收到被代理服务器的响应数据后，不会处理被设置的头域。  
-语法：  **`proxy_ignore_headers field ...;`**  
+语法：  `proxy_ignore_headers field ...;`  
  + field，要设置的HTTP响应头的头域，例如“X-Accel-Redirect”、“X-Accel-Expires”、“Expires”、“Cache-Contorl”或“Set-Cookie”等。
 
-- proxy_redirect指令  
+- 16.proxy_redirect指令  
 该指令用于修改被代理服务器返回的响应头中的“Location”头域和“Refresh”头域，与proy_pass指令配合使用。比如，Nginx服务器通过proxy_pass指令将客户端的请求地址重写为被代理服务器的地址，那么Nginx服务器返回给客户端的响应头中“Location”头域显示的地址就应该和客户端发起请求的地址相对应，而不是代理服务器直接返回的地址信息，否则就会出问题。  
 语法：  
 ```
@@ -183,7 +183,7 @@ proxy_set_header Connection close;
  + replacement，用于替换redirect变量内容的字符串，支持变量的使用。  
 　　对于第1个结构，假设被代理服务器返回的响应头中“Location”头域为：  
 `Location: http://localhost:8081/proxy/some/uri/`  
-　　该指令设置为：　　
+　　该指令设置为：  
 `proxy_redirect http://localhost:8081/proxy/ http://myweb/frontend/;`  
 　　Nginx服务器会将“Location”头域的信息更改为：  
 `Location: http://myweb/frontend//some/uri/`  
@@ -204,21 +204,21 @@ location /server/
 ```  
 　　使用结构３可以将当前作用域下所有的proxy_redirect指令配置全部设置为无效。
 
-- proxy_intercept_errors指令  
+- 17.proxy_intercept_errors指令  
 该指令用于配置一个状态是开启还是关闭。在开启该状态时，如果被合理的服务器返回的HTTP状态码为400或者大于400，则Nginx服务器使用自己定义的错误页（使用error_pasge指令）；如果关闭该指令，Nginx服务器直接将被代理服务器返回的HTTP状态返回给客户端。  
 语法： `proxy_intercept_errors on | off`  
 
-- proxy_headers_hash_max_size指令  
+- 18.proxy_headers_hash_max_size指令  
 该指令用于配置存放HTTP报文头的哈希表的最大容量。  
 语法： `proxy_headers_hash_max_size size;`  
  + size，HTTP报文头哈希表的容量上限，默认为512个字符。  
 
-- proxy_headers_hash_bucket_size指令  
+- 19.proxy_headers_hash_bucket_size指令  
 该指令用于配置存放HTTP报文头的哈希表容量的单位大小。  
 语法： `proxy_headers_hash_bucket_size size;`  
  + size，设置的容量，默认为64个字符。  
 
-- proxy_next_upstream指令  
+- 20.proxy_next_upstream指令  
 在配置Nginx服务器反向代理功能时，如果使用upstream指令一组服务器作为被代理服务器，服务器组中各服务器的访问规则遵循upstream指令配置的轮循规则，同时可以使用该指令配置在发生哪些异常情况时，将请求顺次交由下一个组内服务器处理。  
 语法： `proxy_next_upstream status ...;`  
  + status，设置的服务器返回状态，可以是一个或多个。这些状态包括：  
@@ -228,7 +228,7 @@ location /server/
    - http_500|http_502|http_503|http_504|http_404，被代理的服务器返回500、502、503、504或者404状态代码。
    - off，无法将请求发送给被代理的服务器。
    
-- proxy_ssl_session_reuse指令  
+- 21.proxy_ssl_session_reuse指令  
 该指令用于配置是否使用基于SSL安全协议的会话连接（“https://”）被代理的服务器。  
 语法： `proxy_ssl_session_reuser on | off;`  
 　　默认为开启（on）状态。如果我们在错误日志中发现“SSL3_GET_FINISHED:digest check failed”的情况，可以将该指令配置为关闭“off”状态。  
