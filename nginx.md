@@ -166,7 +166,7 @@ proxy_set_header Connection close;
 语法：  **`proxy_ignore_client_abort on | off;`**
 默认设置为off，当客户端中断网络请求时，Nginx服务器中断对被代理服务器的请求。
 
-- proxy_ignore_headers指令
+- proxy_ignore_headers指令  
 该指令用于设置一些HTTP响应头中的头域，Nginx服务器接收到被代理服务器的响应数据后，不会处理被设置的头域。
 语法：  **`proxy_ignore_headers field ...;`**
  + field，要设置的HTTP响应头的头域，例如“X-Accel-Redirect”、“X-Accel-Expires”、“Expires”、“Cache-Contorl”或“Set-Cookie”等。
