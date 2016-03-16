@@ -247,7 +247,7 @@ location /server/
 语法： `proxy_buffers number size;`  
  + number，Proxy Buffer的个数。
  + size，每个buffer的大小，一般设置为内存页的大小。根据平台的不同，可能为4KB或者8KB。  
- 　　默认设置： `proxy_buffer 8 4k|8k;`  
+ 默认设置： `proxy_buffer 8 4k|8k;`  
 
 - 3.proxy_buffer_size指令  
 该指令用于配置从被代理服务器获取的第一部分响应数据的大小，该数据中一般包含了HTTP响应头，Nginx服务器通过它来获取响应数据和被代理服务器的一些必要信息。  
@@ -274,3 +274,128 @@ location /server/
 该指令用于配置同时写入临时文件的数据量的总大小，合理的设置可以避免磁盘IO负载过重导致系统性能下降的问题。  
 语法： `proxy_temp_file_write_size size;`  
  + size，数据量总大小上限值，默认设置根据平台的不同，可以为8KB或者16KB，一般与平台的内存页大小相同。  
+
+### Proxy Cache的配置的12个指令  
+　　Proxy Cache机制依赖于Proxy Buffer机制，只有在Proxy Buffer机制开启的情况下Proxy Cache的配置才发挥作用。  
+- 1.proxy_cache指令  
+该指令用于配置一块公用的内存区域的名称，该区域可以存放缓冲的索引数据。这些数据在Nginx服务器启动时由缓存索引重建进程负责建立，在Nginx服务器的整个运行过程中由缓存管理进程负责定时检查过期数据、检索等管理工作。  
+语法： `proxy_cache zone | off;`  
+ + zone，用于存放缓存索引的内存区域的名称。
+ + off，关闭proxy_cache功能，是默认的设置。  
+从Nginx 0.7.66开始，Proxy Cache机制开启后会检查被代理服务器响应数据HTTP头中的“Cache-Control”头域、“Expires”头域。当“Cache-Control”头域中的值为“no-cache”、“no-store”、“private”或者“max-age”赋值为0或无意义时，当“Expires”头域包含一个过期的时间时，该响应数据不被Nginx服务器缓存。这样做的主要目的是为了避免私有的数据被其他客户端得到。
+
+- 2.proxy_cache_bypass指令  
+该指令用于配置Nginx服务器向客户端发送响应数据时，不从缓存中获取的条件。这些条件支持使用Nginx配置的常用变量。  
+语法： `proxy_cache_bypass sring ...;`  
+ + string，条件变量，支持设置多个，当至少有一个字符串指令不为空或者不等于0时，响应数据不从缓存中获取。  
+例：  
+```
+proxy_cache_bypass $cookie_nocache $arg_nocache $arg_comment  
+$http_pragma $http_authorization;
+```  
+
+- 3.proxy_cache_key指令  
+该指令用于设置Nginx服务器在内存中为缓存数据建立索引时使用的关键字。  
+语法： `proxy_cache_key string;`  
+ + string，设置的关键字，支持变量。
+在Nginx 0.7.48之前的版本中默认的设置为：  
+`proxy_cache_key $scheme$proxy_host$request_uri;`  
+如果我们希望缓存数据包含服务器主机名称等关键字，则可以将该指令设置为：  
+`proxy_cache_key "$scheme$host$request_uri"'`  
+在Nginx 0.7.48之后的版本中，通常使用以下配置：  
+`proxy_cache_key $scheme$proxy_host$uri$is_args$args;`  
+
+- 4.proxy_cache_lock指令  
+该指令用于设置是否开启缓存的锁功用。在缓存中，某些数据项可以同时被多个请求返回的响应数据填充。开启该功能后，Nginx服务器同时只能有一个请求填充缓存中的某一数据项，这相当于给该数据上锁，不允许其他请求操作。其他的请求如果也想填充该项，必须等待该数据项的锁被释放。这个等待时间由porxy_cache_lock_timeout指令配置。  
+语法： `proxy_cache_lock on | off;`  
+　　默认情况下，设置为关闭状态。
+
+- 5.proxy_cache_lock_timeout指令  
+该指令用于设置缓存的锁功能开启以后锁的超时时间。  
+语法： `proxy_cache_lock_timeout time;`  
+ + time，设置的时间，默认为5s。  
+
+- 6.proxy_cache_min_uses指令  
+该指令用于设置客户端请求发送的次数，当客户端向被代理服务器发送相同请求达到该指令设定的次数后，Nginx服务器才能该请求的响应数据做缓存。合理设置该值可以有效地降低硬盘上缓存数据的数量，并提高缓存的命中率。  
+语法： `proxy_cache_min_uses number;`  
+ + number，设置的次数，默认设置为1。  
+
+- 7.proxy_cache_path指令  
+该指令用于设置Nginx服务器存储缓存数据的路径以及和缓存索引相关内容。  
+语法：  
+```
+proxy_cache_path [levels=levels] kesy_zone=name:size1 [inactive=time]  
+[max_size=size2] [loader_files=number] [loader_sleep=time2] [loader_threshold=time3];
+```  
+ + path，设置缓存数据存放的根路径，该路径应该是预先存在于磁盘上的。
+ + levels，设置在相对于path指定目录的第几级hash目录中缓存数据。levels=1，表示一级hash目录；levels=1:2，表示两级，依次类推。目录的名称是基于请求URL通过哈希算法获取到的。  
+ + name:size1，Nginx服务器的缓存索引重建进程在内存中为缓存数据建立索引，这一对变量用来设置存放缓存索引的内存区域的名称和大小。
+ + time1，设置强制更新缓存数据的时间，当硬盘上的缓存数据在设定的时间内没有被访问时，Nginx服务器就强制从硬盘上将其删除，下次客户端访问该数据时重新缓存。该指令默认设置为10s。
+ + size2，设置硬盘中缓存数据的大小限制。硬盘中的缓存源数据由Nginx服务器的缓存管理进程进行管理，当缓存的大小超过该变量设置时，缓存管理进程将根据最近最少被访问的策略删除缓存。
+ + number，设置缓存索引重建进程每次加载的数据元素的数量上限。在重建缓存索引的过程中，进程通过一系列的递归遍历读取硬盘上的缓存数据目录及缓存数据文件，对每个数据文件中的缓存数据在内存中建立对应的索引，我们称每建立一个索引为加载一个数据元素。进程在每次遍历过程中可以同时加载多个数据元素，该值限制了每次遍历中同时加载的数据元素的数量。默认设置为100。
+ + time2，设置缓存索引重建进程在一次遍历结束、下次遍历开始之间的暂停时长。默认设置为50ms。
+ + time3，设置遍历一次磁盘缓存源数据的时间上限。默认设置为200ms。
+例：  
+```
+proxy_cache_path /nginx/cache/a levels=1 keys_zone=a:10m;
+proxy_cache_path /nginx/cache/b levels=2:2 keys_zone=b:100m;
+proxy_cache_path /nginx/cache/c levels=1:1:2 keys_zone=c:1000m;
+```
+**注意**  
+该指令只能放在http块中。  
+
+- 8.proxy_cache_use_stale指令  
+如果Nginx在访问被代理服务器过程中出现被代理的服务器无法访问或者访问错误的现象时，Nginx服务器可以使用历史缓存响应客户端的请求，这些数据不一定和被代理服务器上最新的数据相一致，但对于更新频率不高的后端服务来说，Nginx服务器的该功能在一定程度上能够为客户端提供不间断访问。该指令用来设置一些状态，当后端被代理的服务器处于这些状态时，Nginx服务器启用该功能。  
+语法：  
+```
+proxy_cache_use_stale error | timeout | invalid_header | updating | http_500 | http_502 
+| http_503 | http_504 | http_404 | off ...;
+``` 
+其中的updating状态并不是指被代理服务器在updating状态，而是指客户端请求的数据在Nginx服务器中正好处于更新状态。
+该指令的默认设置为off。
+
+- 9.proxy_cache_valid指令  
+该指令可以针对不同的HTTP响应状态设置不同的缓存时间。  
+语法： `proxy_cache_valid [ code ...] time;`  
+ + code，设置HTTP响应的状态码。该指令可选，如果不设置Nginx服务器只为HTTP状态代码为200、301和302的响应数据做缓存。可以使用“any”表示缓存所有该指令中未设置的其他响应数据。
+ + time，设置缓存时间。
+例：  
+```
+proxy_cache_valid 200 302 10m;
+proxy_cache_valid 301 1h;
+proxy_cache_vali any 1m;
+```
+该例子中，对返回状态为200和302的响应数据缓存10分钟，对返回状态为301的响应数据缓存1小时，对返回状态为非200、301和302的响应数据缓存1分钟。
+
+- 10.proxy_no_cache指令  
+该指令用于配置在什么情况下不使用cache功能。  
+语法： `proxy_no_cache string ...;`  
+ + string，可以是一个或多个变量。当string的值不为空或者不为“0”时，不启用cache功能。
+
+- 11.proxy_store指令  
+该指令配置是否在本地磁盘缓存来自被代理服务器的响应数据。这是Nginx服务器提供的另一种缓存数据的方法，但是该功能相对Proxy Cache简单一些，它不提供缓存过期更新、内存索引建立等功能，不占用内存空间，对静态数据的效果比较好。  
+语法：` proxy_store on | off | string;`
+ + on | off，设置是否开启Proxy Store功能。如果使用变量on，功能开启，缓存文件会存放到alias指令或root指令设置的本地路径下。默认设置为off。
+ + string，自定义缓存文件的存放路径。如果使用变量string，Proxy Stote功能开启，缓存文件会存放到指定的本地路径下。
+Proxy Stroe方法多使用在被代理服务器端发生错误的情况下，用来缓存被代理服务器的响应数据。
+
+- 12.proxy_store_access指令  
+该指令用于设置用户或用户组地Proxy Store缓存的数据的访问权限。  
+语法： `proxy_store_access users:permissions ...;`  
+ + users，可以设置为user、group或者all。
+ + permissions，设置权限。
+例：  
+```
+location /images/
+{
+    root /data/www;
+    error_page 404 = /fech$uri;     #定义了404错误的请求页面
+}
+location /fetch/
+{
+    proxy_pass http://backend;
+    proxy_stroe on;                 #开启Proxy Stroe方法
+    proxy_stroe_access user:rw group:rw all:r;
+    root /data/www;
+}
+```
