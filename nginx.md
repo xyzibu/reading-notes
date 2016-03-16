@@ -19,7 +19,9 @@
 
 Tips: 在server块中，不要出现server_name指令，即不要设置虚拟主机的名称或IP。  
 
-## 反向代理的基本设置的21个指令
+## 反向代理
+
+### 反向代理的基本设置的21个指令
 作用域： http块、server块、location块  
 
 - 1.proxy_pass指令  
@@ -233,6 +235,42 @@ location /server/
 语法： `proxy_ssl_session_reuser on | off;`  
 　　默认为开启（on）状态。如果我们在错误日志中发现“SSL3_GET_FINISHED:digest check failed”的情况，可以将该指令配置为关闭“off”状态。  
 
- 
+### Proxy Buffer的配置的7个指令
+- 1.proxy_buffering指令
+该指令用于配置是否启用或者关闭Proxy Buffer。  
+语法： `proxy_buffering on | off;`  
+　　默认设置为开启状态。  
+　　开启和关闭Proxy Buffer还可以通过在HTTP响应头部的“X-Accel-Buffering”头域设置“yes”或者“no”来实现，但Nginx配置中proxy_ignore_headers指令的设置可能导致该头域设置失效。  
 
+- 2.proxy_buffers指令  
+该指令用于配置接收一次被代理服务器响应数据的Proxy Buffer个数和每个Buffer的大小。
+语法： `proxy_buffers number size;`  
+ + number，Proxy Buffer的个数。
+ + size，每个buffer的大小，一般设置为内存页的大小。根据平台的不同，可能为4KB或者8KB。  
+ 　　默认设置： `proxy_buffer 8 4k|8k;`  
 
+- 3.proxy_buffer_size指令  
+该指令用于配置从被代理服务器获取的第一部分响应数据的大小，该数据中一般包含了HTTP响应头，Nginx服务器通过它来获取响应数据和被代理服务器的一些必要信息。  
+语法： `proxy_buffer_size size;`  
+ + size，设置的缓存大小，默认设置为4KB或者8KB，保持与proxy_buffers指令中的size变量相同，当然也可以设置得更小。  
+
+- 4.proxy_busy_buffers_size指令  
+该指令用于限制处于BUSY状态的Proxy Buffer的总大小。  
+语法： `proxy_busy_buffers_size size;`  
+ + size，处于BUSY状态的缓存区总大小。默认设置为8KB或者16KB。  
+
+- 5.proxy_temp_path指令  
+该指令用于配置磁盘上的一个文件路径，该文件用于临时存放代理服务器的大体积响应数据。如果Proxy Buffer被装满后，响应数据仍然没有被Nginx服务器完全接收，响应数据就会被临时存放在该文件中。  
+语法： `proxy_temp_path path [level1 [level2 [level3]]];`  
+ + path，磁盘上存放临时文件的路径。  
+ + levelN，在path变量设置的路径下第几级hash目录中存放临时文件。  
+
+- 6.proxy_max_temp_file_size指令  
+该指令用于配置所有临时文件的总体积大小，存放在磁盘上的临时文件大小不能超过该配置值，避免了响应数据过大造成磁盘空间不足的问题。  
+语法： `proxy_max_temp_file_size size;`  
+ + size，临时文件总体积上限值，默认设置为1024MB。  
+
+- 7.proxy_temp_file_write_size指令  
+该指令用于配置同时写入临时文件的数据量的总大小，合理的设置可以避免磁盘IO负载过重导致系统性能下降的问题。  
+语法： `proxy_temp_file_write_size size;`  
+ + size，数据量总大小上限值，默认设置根据平台的不同，可以为8KB或者16KB，一般与平台的内存页大小相同。  
