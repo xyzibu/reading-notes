@@ -282,8 +282,7 @@ location /server/
 语法： `proxy_cache zone | off;`  
  + zone，用于存放缓存索引的内存区域的名称。
  + off，关闭proxy_cache功能，是默认的设置。  
- 
-　　从Nginx 0.7.66开始，Proxy Cache机制开启后会检查被代理服务器响应数据HTTP头中的“Cache-Control”头域、“Expires”头域。当“Cache-Control”头域中的值为“no-cache”、“no-store”、“private”或者“max-age”赋值为0或无意义时，当“Expires”头域包含一个过期的时间时，该响应数据不被Nginx服务器缓存。这样做的主要目的是为了避免私有的数据被其他客户端得到。
+从Nginx 0.7.66开始，Proxy Cache机制开启后会检查被代理服务器响应数据HTTP头中的“Cache-Control”头域、“Expires”头域。当“Cache-Control”头域中的值为“no-cache”、“no-store”、“private”或者“max-age”赋值为0或无意义时，当“Expires”头域包含一个过期的时间时，该响应数据不被Nginx服务器缓存。这样做的主要目的是为了避免私有的数据被其他客户端得到。
 
 - 2.proxy_cache_bypass指令  
 该指令用于配置Nginx服务器向客户端发送响应数据时，不从缓存中获取的条件。这些条件支持使用Nginx配置的常用变量。  
@@ -299,7 +298,6 @@ $http_pragma $http_authorization;
 该指令用于设置Nginx服务器在内存中为缓存数据建立索引时使用的关键字。  
 语法： `proxy_cache_key string;`  
  + string，设置的关键字，支持变量。　　
- 
 在Nginx 0.7.48之前的版本中默认的设置为：  
 `proxy_cache_key $scheme$proxy_host$request_uri;`  
 如果我们希望缓存数据包含服务器主机名称等关键字，则可以将该指令设置为：  
@@ -360,7 +358,7 @@ proxy_cache_use_stale error | timeout | invalid_header | updating | http_500 | h
 该指令可以针对不同的HTTP响应状态设置不同的缓存时间。  
 语法： `proxy_cache_valid [ code ...] time;`  
  + code，设置HTTP响应的状态码。该指令可选，如果不设置Nginx服务器只为HTTP状态代码为200、301和302的响应数据做缓存。可以使用“any”表示缓存所有该指令中未设置的其他响应数据。
- + time，设置缓存时间。　　
+ + time，设置缓存时间。  
 例：  
 ```
 proxy_cache_valid 200 302 10m;
@@ -385,7 +383,7 @@ Proxy Stroe方法多使用在被代理服务器端发生错误的情况下，用
 该指令用于设置用户或用户组地Proxy Store缓存的数据的访问权限。  
 语法： `proxy_store_access users:permissions ...;`  
  + users，可以设置为user、group或者all。
- + permissions，设置权限。　　
+ + permissions，设置权限。　 
 例：  
 ```
 location /images/
