@@ -297,7 +297,7 @@ $http_pragma $http_authorization;
 - 3.proxy_cache_key指令  
 该指令用于设置Nginx服务器在内存中为缓存数据建立索引时使用的关键字。  
 语法： `proxy_cache_key string;`  
- + string，设置的关键字，支持变量。　　
+ + string，设置的关键字，支持变量。  
 在Nginx 0.7.48之前的版本中默认的设置为：  
 `proxy_cache_key $scheme$proxy_host$request_uri;`  
 如果我们希望缓存数据包含服务器主机名称等关键字，则可以将该指令设置为：  
@@ -383,7 +383,8 @@ Proxy Stroe方法多使用在被代理服务器端发生错误的情况下，用
 该指令用于设置用户或用户组地Proxy Store缓存的数据的访问权限。  
 语法： `proxy_store_access users:permissions ...;`  
  + users，可以设置为user、group或者all。
- + permissions，设置权限。　 
+ + permissions，设置权限。
+ 　 
 例：  
 ```
 location /images/
