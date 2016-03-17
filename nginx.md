@@ -396,3 +396,47 @@ location /fetch/
     root /data/www;
 }
 ```
+
+# Nginx服务器的缓存机制  
+## 基于memcached的缓存6个指令  
+在Nginx服务器的标准HTTP模块中有一个ngx_http_memcached_module模块，专门用于处理和memcached相关的配置和功能实现。
+
+- 1.memcached_pass指令  
+该指令用于配置memcached服务器的地址。  
+语法： `memcached_pass address;`  
+ + address，memcached服务器的地址，支持IP+端口的地址或者是域名地址。也可以使用upstream指令配置一个memcached服务器组，然后将address配置为upstream的名称。  
+
+- 2.memcached_connect_timeout指令  
+该指令用于配置连接memcached服务器的超时时间。  
+语法： `memcached_connect_timeout time;`  
+ + time，设置的超时时间，默认为60s。建议该时间不要超过75s。  
+
+- 3.memcached_read_timeout指令  
+该指令配置Nginx服务器向memcached服务器发出两次read请求之间的等待超时时间，如果在该时间内没有进行数据传输，连接将会被关闭。  
+语法： `memcached_read_timeout time;`  
+ + time，设置的超时时间，默认为60s。  
+
+- 4.memcached_send_timeout指令  
+该指令配置Nginx服务器向memcached服务器发出两次write请求之间的等待超时时间，如果在该时间内没有进行数据传输，连接将会被关闭。  
+语法： `memcached_send_timeout time;`  
+ + time，设置的超时时间，默认为60s。  
+
+- 5.memcached_buffer_size指令  
+该指令用于配置Nginx服务器用于接收memcached服务器响应数据的缓存区大小。  
+语法： `memcached_buffer_size size;`  
+ + size，设置的缓存区大小，一般是所在平台的内存页大小的倍数。默认设置为：  
+ `memcached_buffer_size 4k|8k;`  
+
+- 6.memcached_next_upstream指令  
+该指令在配置了一组memcached服务器的情况下使用。服务器组中各memcached服务器的 访问规则遵循upstream指令配置的轮询规则，同时可以使用该指令配置在发生哪些异常情况时，将请求顺次交由下一个组内服务器处理。  
+语法： `memcached_next_upstream status ...;`  
+ + status，设置的memcached服务器返回状态，可以是一个或者多个。这些状态包括：  
+   - error，在建立连接、向memcached服务器发送请求或者读取时服务器发生连接错误。
+   - timeout，在建立连接、向memcached服务器发送请求或者读取时服务器发生连接超时。
+   - invalid_header，memcached服务器返回的响应头为空或者无效。
+   - not_found，memcached服务器未找到对应的键/值对。
+   - off，无法将请求发送给memcached服务器。
+ 
+
+
+   
