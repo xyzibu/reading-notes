@@ -322,11 +322,9 @@ $http_pragma $http_authorization;
 
 - 7.proxy_cache_path指令  
 该指令用于设置Nginx服务器存储缓存数据的路径以及和缓存索引相关内容。  
-语法：  
-```
-proxy_cache_path [levels=levels] kesy_zone=name:size1 [inactive=time]  
-[max_size=size2] [loader_files=number] [loader_sleep=time2] [loader_threshold=time3];
-```  
+语法： 
+```proxy_cache_path [levels=levels] kesy_zone=name:size1 [inactive=time]  
+[max_size=size2] [loader_files=number] [loader_sleep=time2] [loader_threshold=time3];```  
  + path，设置缓存数据存放的根路径，该路径应该是预先存在于磁盘上的。
  + levels，设置在相对于path指定目录的第几级hash目录中缓存数据。levels=1，表示一级hash目录；levels=1:2，表示两级，依次类推。目录的名称是基于请求URL通过哈希算法获取到的。  
  + name:size1，Nginx服务器的缓存索引重建进程在内存中为缓存数据建立索引，这一对变量用来设置存放缓存索引的内存区域的名称和大小。
@@ -383,8 +381,7 @@ Proxy Stroe方法多使用在被代理服务器端发生错误的情况下，用
 该指令用于设置用户或用户组地Proxy Store缓存的数据的访问权限。  
 语法： `proxy_store_access users:permissions ...;`  
  + users，可以设置为user、group或者all。
- + permissions，设置权限。
- 　 
+ + permissions，设置权限。  
 例：  
 ```
 location /images/
