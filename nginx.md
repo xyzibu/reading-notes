@@ -398,7 +398,7 @@ location /fetch/
 ```
 
 # Nginx服务器的缓存机制  
-## 基于memcached的缓存6个指令  
+## 基于memcached的缓存机制的6个指令  
 在Nginx服务器的标准HTTP模块中有一个ngx_http_memcached_module模块，专门用于处理和memcached相关的配置和功能实现。
 
 - 1.memcached_pass指令  
