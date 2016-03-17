@@ -20,10 +20,9 @@
 Tips: 在server块中，不要出现server_name指令，即不要设置虚拟主机的名称或IP。  
 
 ## 反向代理
-
-### 反向代理的基本设置的21个指令
 作用域： http块、server块、location块  
 
+### 反向代理的基本设置的21个指令
 - 1.proxy_pass指令  
 该指令用来设置被代理服务器的地址，可以是主机名称、IP地址加端口号的形式。  
 语法： `proxy_pass URL;`  
