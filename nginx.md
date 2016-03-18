@@ -430,12 +430,12 @@ location /fetch/
 - 6.memcached_next_upstream指令  
 该指令在配置了一组memcached服务器的情况下使用。服务器组中各memcached服务器的 访问规则遵循upstream指令配置的轮询规则，同时可以使用该指令配置在发生哪些异常情况时，将请求顺次交由下一个组内服务器处理。  
 语法： `memcached_next_upstream status ...;`  
- + status，设置的memcached服务器返回状态，可以是一个或者多个。这些状态包括：  
-   - error，在建立连接、向memcached服务器发送请求或者读取时服务器发生连接错误。
-   - timeout，在建立连接、向memcached服务器发送请求或者读取时服务器发生连接超时。
-   - invalid_header，memcached服务器返回的响应头为空或者无效。
-   - not_found，memcached服务器未找到对应的键/值对。
-   - off，无法将请求发送给memcached服务器。
+ + status，设置的memcached服务器返回状态，可以是一个或者多个。这些状态包括：
+    + error，在建立连接、向memcached服务器发送请求或者读取时服务器发生连接错误。
+    + timeout，在建立连接、向memcached服务器发送请求或者读取时服务器发生连接超时。
+    + invalid_header，memcached服务器返回的响应头为空或者无效。
+    + not_found，memcached服务器未找到对应的键/值对。
+    + off，无法将请求发送给memcached服务器。
  
 
 
