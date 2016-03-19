@@ -458,7 +458,6 @@ location /fetch/
 该指令用于配置当前虚拟主机支持的协议。  
 语法： `protocol imap | pop3 | smtp;`  
 
-
 - 4.so_keepalive指令  
 作用域：mail块或server块  
 该指令用于配置后端代理服务器是否启用“TCP keepalive”模式来处理Nginx邮件服务器转发的客户端连接。  
@@ -477,8 +476,69 @@ method支持以下配置：
  + pop3_capabilities指令用于配置POP3协议的扩展功能。  
  作用域：mail块或server块  
 语法： `pop3_capabilities extension ...;`  
-    + extension，要加入POP3协议的扩展。  
+   + extension，要加入POP3协议的扩展。  
 默认配置：`pop3_capabilities TOP USER UIDL;`  
 
 - 6.配置IMAP协议  
+用于配置IMAP协议的指令包括imap_auth指令、imap_capabilities指令和imap_client_buffer指令三个。前两个指令和配置POP3协议时使用的两个用法是相同的。  
+ + imap_auth指令用于配置POP3认证用户的方式。
+作用域：mail块或server块  
+语法： `imap_auth method ...;`  
+method支持以下配置：  
+   + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
+   + login，使用AUTH=LOGIN方法进行认证。
+   + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
+ + imap_capabilities指令用于配置IMAP协议的扩展功能。
+作用域：mail块或server块    
+语法： `imap_capabilities extension ...;`  
+   + extension，要加入IMAP协议的扩展。  
+默认配置：`imap_capabilities IMAP4 IMAP4revl UIDPLUS;` 
+ +  imap_client_buffer指令用于配置IMAP协议读数据缓存的大小。  
+语法： `imap_client_buffer size;`  
+   + size，配置的读缓存大小，一般为平台的一个内存页大小。  
+默认配置：`imap_client_buffer 4K|8K;` 
  
+- 7.配置SMTP协议  
+用于配置SMTP协议的指令包括smtp_auth指令和smtp_capabilities指令。它们的用法也和前面两个协议中的基本相同。  
+ + smtp_auth指令用于配置SMTP认证用户的方式。  
+作用域：mail块或server块  
+语法： `smtp_auth method ...;`  
+method支持以下配置：  
+   + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
+   + login，使用AUTH=LOGIN方法进行认证。
+   + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
+默认配置：`smtp_auth plain;`  
+ + smtp_capabilities指令用于配置SMTP协议的扩展功能。  
+作用域：mail块或server块  
+语法： `smtp_capabilities extension ...;`  
+   + extension，要加入SMTP协议的扩展。
+
+- 8.auth_http指令  
+作用域：mail块或server块
+用于配置Nginx提供邮件服务时的用于HTTP认证的服务器地址。  
+语法： `auth_http URL;`  
+ + URL，HTTP认证服务器的地址。  
+
+- 9.auth_http_header指令  
+作用域：mail块或server块  
+通过该指令可以在Nginx服务器向HTTP认证服务器发起认证请求时，向请求头添加指定的头域。  
+例：`auth_http_header X-Auth-Key "secret_string";`  
+
+- 10.auth_http_timeout指令  
+该指令用于配置Nginx服务器向HTTP认证服务器发起认证请求后等待响应的超时时间。  
+语法： `auth_http_timeout time;`  
+ + time，超时时间，默认60s。一般该时间设置不超过75s。
+
+- 11.proxy_buffer指令  
+作用域：mail块或server块  
+该指令用于配置了后端代理服务器（组）的情况，用来设置Nginx服务器代理缓存的大小，一般为平台的一个内存页的大小。
+默认配置：`proxy_buffer 4k|8k;`  
+
+- 12.proxy_pass_error_message指令  
+该指令用于配置了后端代理服务器（组）的情况，用来配置是否将后端服务器上邮件服务认证过程中产生的错误信息发送给客户端。  
+语法： `proxy_pass_error_message on | off;`  
+默认情况下，该指令设置为off。  
+
+
+  
+
