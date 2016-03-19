@@ -441,3 +441,44 @@ location /fetch/
 # Nginx服务器的邮件服务
 ## Nginx邮件服务的配置的12个指令
 - 1.listen指令
+作用域：server块  
+该指令用于配置邮件服务器监听的IP地址和端口。  
+语法： `listen address:port;`  
+ + address，邮件服务器监听的IP地址，支持通配符“*”、主机名称。
+ + port，邮件服务器监听端口。
+
+- 2.server_name指令  
+该指令用于为每个server块构成的虚拟主机配置的域名。  
+语法： `server_name name;`  
+ + name，配置的服务器域名。  
+如果mail块中配置了多个虚拟主机，该指令只能在server块中配置；如果只有一个虚拟主机，该指令可以在mail块中配置。
+
+- 3.protocol指令  
+作用域：server块  
+该指令用于配置当前虚拟主机支持的协议。  
+语法： `protocol imap | pop3 | smtp;`  
+
+
+- 4.so_keepalive指令  
+作用域：mail块或server块  
+该指令用于配置后端代理服务器是否启用“TCP keepalive”模式来处理Nginx邮件服务器转发的客户端连接。  
+语法： `so_keepalive on | off;`  
+默认情况下，该指令配置为off。
+
+- 5.配置POP3协议  
+用于配置POP3协议的指令有两个：pop3_auth指令和pop3_capabilities指令。  
+ + pop3_auth指令用于配置POP3认证用户的方式。  
+作用域：mail块或server块  
+语法： `pop3_auth method ...'`  
+method支持以下配置：
+   +  plain，使用USER/PASS、AUTH PLAIN、AUTH LOGIN方法认证。这也是邮件服务器提供POP3协议支持时最基本的认证方式，也是Nginx邮件服务的默认配置。
+   +  apop，使用APOP方法认证。该方法需要客户端提供的密码是非加密密码。
+   +  cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
+ + pop3_capabilities指令用于配置POP3协议的扩展功能。  
+ 作用域：mail块或server块  
+语法： `pop3_capabilities extension ...;`  
+    + extension，要加入POP3协议的扩展。  
+默认配置：`pop3_capabilities TOP USER UIDL;`  
+
+- 6.配置IMAP协议  
+ 
