@@ -438,5 +438,6 @@ location /fetch/
    - off，无法将请求发送给memcached服务器。
  
 
-
-   
+# Nginx服务器的邮件服务
+## Nginx邮件服务的配置的12个指令
+- 1.listen指令
