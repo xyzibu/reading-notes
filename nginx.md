@@ -458,60 +458,60 @@ location /fetch/
 该指令用于配置当前虚拟主机支持的协议。  
 语法： `protocol imap | pop3 | smtp;`  
 
-- 4.so_keepalive指令  
+- 4.so_keepalive指令
 作用域：mail块或server块  
 该指令用于配置后端代理服务器是否启用“TCP keepalive”模式来处理Nginx邮件服务器转发的客户端连接。  
 语法： `so_keepalive on | off;`  
 默认情况下，该指令配置为off。
 
-- 5.配置POP3协议  
+- 5.配置POP3协议
 用于配置POP3协议的指令有两个：pop3_auth指令和pop3_capabilities指令。  
  + pop3_auth指令用于配置POP3认证用户的方式。  
 作用域：mail块或server块  
 语法： `pop3_auth method ...'`  
 method支持以下配置：
-   +  plain，使用USER/PASS、AUTH PLAIN、AUTH LOGIN方法认证。这也是邮件服务器提供POP3协议支持时最基本的认证方式，也是Nginx邮件服务的默认配置。
-   +  apop，使用APOP方法认证。该方法需要客户端提供的密码是非加密密码。
-   +  cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
+     + plain，使用USER/PASS、AUTH PLAIN、AUTH LOGIN方法认证。这也是邮件服务器提供POP3协议支持时最基本的认证方式，也是Nginx邮件服务的默认配置。
+     + apop，使用APOP方法认证。该方法需要客户端提供的密码是非加密密码。
+     + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
  + pop3_capabilities指令用于配置POP3协议的扩展功能。  
  作用域：mail块或server块  
 语法： `pop3_capabilities extension ...;`  
-   + extension，要加入POP3协议的扩展。  
+     + extension，要加入POP3协议的扩展。  
 默认配置：`pop3_capabilities TOP USER UIDL;`  
 
-- 6.配置IMAP协议  
+- 6.配置IMAP协议
 用于配置IMAP协议的指令包括imap_auth指令、imap_capabilities指令和imap_client_buffer指令三个。前两个指令和配置POP3协议时使用的两个用法是相同的。  
  + imap_auth指令用于配置POP3认证用户的方式。
 作用域：mail块或server块  
 语法： `imap_auth method ...;`  
 method支持以下配置：  
-   + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
-   + login，使用AUTH=LOGIN方法进行认证。
-   + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
+     + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
+     + login，使用AUTH=LOGIN方法进行认证。
+     + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
  + imap_capabilities指令用于配置IMAP协议的扩展功能。
 作用域：mail块或server块    
 语法： `imap_capabilities extension ...;`  
-   + extension，要加入IMAP协议的扩展。  
+     + extension，要加入IMAP协议的扩展。  
 默认配置：`imap_capabilities IMAP4 IMAP4revl UIDPLUS;` 
  +  imap_client_buffer指令用于配置IMAP协议读数据缓存的大小。  
 语法： `imap_client_buffer size;`  
-   + size，配置的读缓存大小，一般为平台的一个内存页大小。  
+     + size，配置的读缓存大小，一般为平台的一个内存页大小。  
 默认配置：`imap_client_buffer 4K|8K;` 
  
-- 7.配置SMTP协议  
+- 7.配置SMTP协议
 用于配置SMTP协议的指令包括smtp_auth指令和smtp_capabilities指令。它们的用法也和前面两个协议中的基本相同。  
  + smtp_auth指令用于配置SMTP认证用户的方式。  
 作用域：mail块或server块  
 语法： `smtp_auth method ...;`  
 method支持以下配置：  
-   + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
-   + login，使用AUTH=LOGIN方法进行认证。
-   + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
+     + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
+     + login，使用AUTH=LOGIN方法进行认证。
+     + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
 默认配置：`smtp_auth plain;`  
  + smtp_capabilities指令用于配置SMTP协议的扩展功能。  
 作用域：mail块或server块  
 语法： `smtp_capabilities extension ...;`  
-   + extension，要加入SMTP协议的扩展。
+     + extension，要加入SMTP协议的扩展。
 
 - 8.auth_http指令  
 作用域：mail块或server块
