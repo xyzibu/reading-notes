@@ -441,9 +441,9 @@ location /fetch/
 # Nginx服务器的邮件服务
 ## Nginx邮件服务的配置的12个指令
 - 1.listen指令
-作用域：server块  
-该指令用于配置邮件服务器监听的IP地址和端口。  
-语法： `listen address:port;`  
+作用域：server块
+该指令用于配置邮件服务器监听的IP地址和端口。
+语法： `listen address:port;`
  + address，邮件服务器监听的IP地址，支持通配符“*”、主机名称。
  + port，邮件服务器监听端口。
 
@@ -531,7 +531,7 @@ method支持以下配置：
 
 - 11.proxy_buffer指令  
 作用域：mail块或server块  
-该指令用于配置了后端代理服务器（组）的情况，用来设置Nginx服务器代理缓存的大小，一般为平台的一个内存页的大小。
+该指令用于配置了后端代理服务器（组）的情况，用来设置Nginx服务器代理缓存的大小，一般为平台的一个内存页的大小。  
 默认配置：`proxy_buffer 4k|8k;`  
 
 - 12.proxy_pass_error_message指令  
