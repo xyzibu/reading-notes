@@ -440,9 +440,9 @@ location /fetch/
 
 # Nginx服务器的邮件服务
 ## Nginx邮件服务的配置的12个指令
-- 1.listen指令
-作用域：server块
-该指令用于配置邮件服务器监听的IP地址和端口。
+- 1.listen指令  
+作用域：server块  
+该指令用于配置邮件服务器监听的IP地址和端口。  
 语法： `listen address:port;`
  + address，邮件服务器监听的IP地址，支持通配符“*”、主机名称。
  + port，邮件服务器监听端口。
