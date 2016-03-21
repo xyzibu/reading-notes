@@ -1,3 +1,23 @@
+# Nginx服务器的基础配置
+## 配置运行Nginx服务器用户（组）
+- user指令  
+作用域：全局块  
+语法： `user user [group];`  
+ + user，指定可以运行Nginx服务器的用户。
+ + group，可选项，指定可以运行Nginx服务器的用户组。  
+只有被设置的用户或者用户组才有权限启动Nginx进程，如果是其他用户尝试启动Nginx进程，将会报错。  
+如果希望所有用户都可以启动Nginx进程，有两种方法：  
+1.将此指令行注释掉：  
+`#user user [group];`  
+2.将用户（和用户组）设置为nobody：  
+`user nobody nobody;`  
+这也是user指令的默认配置。  
+
+
+
+
+
+
 # Nginx服务器的代理服务
 ## 正向代理
 作用域： http块、server块、location块  
