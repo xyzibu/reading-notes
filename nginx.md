@@ -13,8 +13,59 @@
 `user nobody nobody;`  
 这也是user指令的默认配置。  
 
+## 配置允许生成的worker process数
+- worker_process指令
+作用域：全局块  
+语法：`worker_process number | auto;`  
+ + number，指定Nginx进程最多可以产生的worker process数。
+ + auto，设置此值，Nginx进程将会自动检测。
+默认的配置中，number=1。
 
+## 配置Nginx进程PID存放路径
+- pid指令  
+作用域：全局块  
+语法：`pid file;`  
+ + file，指定存放路径和文件名称。  
+配置文件默认将此文件存放在Nginx安装目录logs下，名字为nignx.pid。file可以是绝对路径，也可以是以Nginx安装目录为根目录的相对路径。
 
+## 配置错误日志的存放路径  
+- error_log指令  
+作用域：全局块、http块、server块、location块  
+语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];`  
+
+## 配置文件的引入  
+- include指令
+作用域：任意地方  
+语法：`include file;`  
+ + file，要引入的配置文件，支持相对路径。
+
+## 设置网络连接的序列化
+- accept_mutex指令
+作用域：events块  
+当其设置为开启的时候，将会对多个Nginx进程接收连接进行序列化，防止多个进程对连接的争抢。  
+语法：`accept_mutex on | off;`  
+此指令默认为开启（on）状态。  
+
+## 设置是否允许同时连接多个网络
+- multi_acept指令  
+作用域：events块  
+语法：`multi_accept on | off;`  
+此指令默认为关闭（off）指令，即每个worker process一次只能接收一个新到达的网络连接。
+
+## 事件驱动模型的选择
+- use指令
+作用域：events块  
+语法：`use method;`  
+ + method，select、poll、kqueue、epoll、rtsig、/dev/poll、eventport
+
+## 配置最大连接数
+- worker_connections指令
+用来设置允许每一个worker process同时开启的最大连接数。  
+作用域：events块  
+语法：`worker_connections number;`  
+此指令的默认设置为512。
+**注意**  
+这里的nuber不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
 
 
 
@@ -180,7 +231,8 @@ proxy_set_header Connection close;
 - 13.proxy_method指令  
 该指令用于设置Nginx服务器请求被代理服务器时使用的请求方法，一般为POST或者GET。设置了该指令，客户端的请求方法将被忽略。  
 语法：  `proxy_method method;`  
- + method，可以设置为POST或者GET，注意不加引号。
+ + method，可以设置为POST或者GET，
+ + 不加引号。
  
 - 14.proxy_ignore_client_abort指令  
 该指令用于设置在客户端中断网络请求时，Nginx服务器是否中断对被代理服务器的请求。  
