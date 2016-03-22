@@ -67,6 +67,49 @@
 **注意**  
 这里的nuber不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
 
+##　自定义服务日志
+- access_log指令
+作用域：http块、server块、location块  
+语法：`access_log path [format [buffer=size]];`  
+ + path，配置服务日志的文件存放的路径和名称。
+ + format，可选项，自定义服务日志的格式字符串，也可以通过“格式串的名称”使用log_format指令定义好的格式。
+ + size，配置临时存放日志的内存缓存区大小。  
+默认配置：`access_log log/access.log combined;`  
+其中，combined为log_format指令默认定义的日志格式字符串的名称。  
+如果要取消记录服务日志的功能，则使用：`access_log off;`  
+
+- log_format指令
+作用域：http块  
+语法：`log_format name string ...;`  
+ + name，格式字符串的名称，默认的名字为combined。
+ + string，服务日志的格式字符串。
+
+## 配置允许sendfile方式传输文件
+- sendfile指令
+作用域：http块、server块、location块  
+语法：`sendfile on | off;`  
+默认值为off。  
+
+- sendfile_max_chunk指令
+作用域：http块、server块、location块  
+语法：`sendfile_max_chunk size;`  
+ + size，如果大于0，Nginx进程的每个worker process每次调用sendfile()传输的数据量最大不能超过这个值；如果设置为0，刚无限制。默认值为0。
+  
+## 配置连接超时时间
+- keepalive_timeout指令  
+作用域：http块、server块、location块  
+语法：`keepalive_timeout timeout [header_timeout];`  
+ + timeout，服务器端对连接的保持时间，默认值为75s。
+ + header_timeout，可选项，在应答报文头的Keep-Alive域设置超时时间：“Keep-Alive:timeout=header_timeout”。
+ 
+## 单连接请求数上限
+- keepalive_requests指令
+作用域：server块、location块  
+Nginx服务器端和用户端建立会话连接后，用户端通过此连接发送请求。此指令用于限制用户通过某一连接向Nginx服务器发送请求的次数。  
+语法：`keepalive_request number;`  
+默认设置为100。  
+ 
+
 
 
 # Nginx服务器的代理服务
