@@ -14,7 +14,7 @@
 这也是user指令的默认配置。  
 
 ## 配置允许生成的worker process数
-- worker_process指令
+- worker_process指令  
 作用域：全局块  
 语法：`worker_process number | auto;`  
  + number，指定Nginx进程最多可以产生的worker process数。
@@ -34,13 +34,13 @@
 语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];`  
 
 ## 配置文件的引入  
-- include指令
+- include指令  
 作用域：任意地方  
 语法：`include file;`  
  + file，要引入的配置文件，支持相对路径。
 
 ## 设置网络连接的序列化
-- accept_mutex指令
+- accept_mutex指令  
 作用域：events块  
 当其设置为开启的时候，将会对多个Nginx进程接收连接进行序列化，防止多个进程对连接的争抢。  
 语法：`accept_mutex on | off;`  
@@ -53,13 +53,13 @@
 此指令默认为关闭（off）指令，即每个worker process一次只能接收一个新到达的网络连接。
 
 ## 事件驱动模型的选择
-- use指令
+- use指令  
 作用域：events块  
 语法：`use method;`  
  + method，select、poll、kqueue、epoll、rtsig、/dev/poll、eventport
 
 ## 配置最大连接数
-- worker_connections指令
+- worker_connections指令  
 用来设置允许每一个worker process同时开启的最大连接数。  
 作用域：events块  
 语法：`worker_connections number;`  
@@ -68,7 +68,7 @@
 这里的nuber不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
 
 ##　自定义服务日志
-- access_log指令
+- access_log指令  
 作用域：http块、server块、location块  
 语法：`access_log path [format [buffer=size]];`  
  + path，配置服务日志的文件存放的路径和名称。
@@ -78,22 +78,22 @@
 其中，combined为log_format指令默认定义的日志格式字符串的名称。  
 如果要取消记录服务日志的功能，则使用：`access_log off;`  
 
-- log_format指令
+- log_format指令  
 作用域：http块  
 语法：`log_format name string ...;`  
  + name，格式字符串的名称，默认的名字为combined。
  + string，服务日志的格式字符串。
 
 ## 配置允许sendfile方式传输文件
-- sendfile指令
+- sendfile指令  
 作用域：http块、server块、location块  
 语法：`sendfile on | off;`  
 默认值为off。  
 
-- sendfile_max_chunk指令
+- sendfile_max_chunk指令  
 作用域：http块、server块、location块  
 语法：`sendfile_max_chunk size;`  
- + size，如果大于0，Nginx进程的每个worker process每次调用sendfile()传输的数据量最大不能超过这个值；如果设置为0，刚无限制。默认值为0。
+ + size，如果大于0，Nginx进程的每个worker process每次调用sendfile()传输的数据量最大不能超过这个值；如果设置为0，则无限制。默认值为0。
   
 ## 配置连接超时时间
 - keepalive_timeout指令  
@@ -103,7 +103,7 @@
  + header_timeout，可选项，在应答报文头的Keep-Alive域设置超时时间：“Keep-Alive:timeout=header_timeout”。
  
 ## 单连接请求数上限
-- keepalive_requests指令
+- keepalive_requests指令  
 作用域：server块、location块  
 Nginx服务器端和用户端建立会话连接后，用户端通过此连接发送请求。此指令用于限制用户通过某一连接向Nginx服务器发送请求的次数。  
 语法：`keepalive_request number;`  
