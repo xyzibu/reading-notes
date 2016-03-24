@@ -110,8 +110,39 @@ Nginx服务器端和用户端建立会话连接后，用户端通过此连接发
 默认设置为100。  
  
 ## 配置网络监听
-
-
+- listen指令  
+配置监听使用listen指令，其配置方法有三种。  
+1.配置监听的IP地址。  
+语法：  
+```
+listen address[:port] [default_server] [setfib=number] [backlog=number] [rcvbuf=size] [sendbuf=size] [deferred] 
+[accept_filter=filter] [bind] [ssl];
+```  
+2.配置监听端口  
+语法：
+```
+listen port [default_server] [setfib=number] [backlog=number] [rcvbuf=size] [sendbuf=size] [deferred] 
+[accept_filter=filter] [bind] [ipv6only=on|off] [ssl];
+```  
+3.配置UNIX Domain Socket  
+语法：  
+```
+listen unix:path [default_server] [backlog=number] [rcvbuf=size] [sendbuf=size] [deferred] 
+[accept_filter=filter] [bind] [ssl];
+```  
+ + address，IP地址，如果是IPv6的地址，需要使用中括号“[]”括起来，比如[fe80::1]等。  
+ + port，端口号，如果只定义了IP地址没有定义端口号，就使用80端口。
+ + path，socket文件路径。
+ + default_server，标识符，将此虚拟主机设置为address:port的默认主机。
+ + setfib=number，Nginx-0.8.44中使用这个变量为监听socket关联路由表，目前只对FreeBSD起作用，不常用。
+ + backlog=number，设置监听函数listen()最多允许多少网络连接同时处于挂起状态，在FreeBSD中默认为-1，其他平台默认为511。
+ + rcvbuf=size，设置监听socket接收缓冲区大小。
+ + sndbuf=size，设置监听socket发送缓冲区大小。
+ + deferred，标识符，将accept()设置为Deferred模式。
+ + accept_filter=filter，设置监听端口对请求的过滤，被过滤的内容不能被接收和处理。本指令只在FreeBSD和NetBSD 5.0+平台有效。filter可以设置为dataready或httpready。
+ + bind，标识符，使用独立的bind()处理此address:port。一般情况下，对于端口相同而IP地址不同的多个连接，Nginx服务器将只使用一个监听命令，并使用bind()处理端口相同的所有连接。
+ + ssl，标识符，设置会话连接使用SSL模式进行，此标识符和Nginx服务器提供的HTTPS服务有关。
+ 
 
 
 
