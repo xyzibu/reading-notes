@@ -143,6 +143,11 @@ listen unix:path [default_server] [backlog=number] [rcvbuf=size] [sendbuf=size] 
  + bind，标识符，使用独立的bind()处理此address:port。一般情况下，对于端口相同而IP地址不同的多个连接，Nginx服务器将只使用一个监听命令，并使用bind()处理端口相同的所有连接。
  + ssl，标识符，设置会话连接使用SSL模式进行，此标识符和Nginx服务器提供的HTTPS服务有关。
  
+## 基于名称的虚拟主机配置
+- server_name指令  
+语法：`server_name name;`  
+ + name，主机名，可以只有一个名称，也可以由多个名称并列，之间用空格隔开。在name中可以使用通配符，但通配符只能用在由三段字符串组成的名称的首段或尾段，或者由两段字符串组成的名称的尾段。在name中还可以使用正则表达式，并使用“~”作为正则表达式字符串的开始标记。  
+   
 
 
 
