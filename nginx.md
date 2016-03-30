@@ -183,6 +183,13 @@ index指令有两个作用：一是用户在发出请求访问网站时，请求
 语法：`index file ...;`  
  + file，可以包含多个文件名，其间使用空格分隔，也可以包含其他变量。 
 
+## 设置网站的错误页面
+- error_page指令
+作用域：http块、server块、location块
+语法：`error_page code ... [=[response]] uri;`  
+ + code，要处理的HTTP错误代码。
+ + response，可选项，将code指定的错误代码转化为新的错误代码response。
+ + uri，错误页面的路径或者网站地址。如果设置为路径，则是以Nginx服务器安装路径下的html目录为根路径的相对蹊径如果设置为网址，刚Nginx服务器会直接访问该网址获取错误页面，并返回给用户端。
 
 
 
