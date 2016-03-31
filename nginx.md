@@ -191,6 +191,21 @@ index指令有两个作用：一是用户在发出请求访问网站时，请求
  + response，可选项，将code指定的错误代码转化为新的错误代码response。
  + uri，错误页面的路径或者网站地址。如果设置为路径，则是以Nginx服务器安装路径下的html目录为根路径的相对蹊径如果设置为网址，刚Nginx服务器会直接访问该网址获取错误页面，并返回给用户端。
 
+## 基于IP配置Nginx的访问权限
+作用域：http块、server块、location块
+- allow指令
+用于设置允许访问Nginx的客户端IP  
+语法：`allow address | CIDR | all;`  
+ + address，允许访问的客户端的IP，不支持同时设置多个。如果有多个IP需要设置，需要重复使用allow指令。
+ + CIDR，允许访问的客户端的CIDR地址。
+ + all，允许所有客户端访问。
+
+- deny指令
+用于设置禁止访问Nginx的客户端IP  
+语法：`deny address | CIDR | all;`  
+ + address，禁止访问的客户端的IP，不支持同时设置多个。如果有多个IP需要设置，需要重复使用deny指令。
+ + CIDR，禁止访问的客户端的CIDR地址。
+ + all，禁止所有客户端访问。
 
 
 # Nginx服务器的代理服务
