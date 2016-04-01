@@ -207,6 +207,22 @@ index指令有两个作用：一是用户在发出请求访问网站时，请求
  + CIDR，禁止访问的客户端的CIDR地址。
  + all，禁止所有客户端访问。
 
+## 基于密码配置Nginx的访问权限
+- auth_basic指令
+用于开户或者关闭认证功能。  
+语法：`auth_basic string | off;`  
+ + string，开启认证功能，并配置认证时的指示信息。
+ + off，关闭认证功能。
+
+- auth_basic_user_file指令
+设置包含用户名和密码信息的文件路径。  
+语法：`auth_basic_user_file file;`  
+ + file，密码文件的绝对路径。
+
+
+
+
+
 
 # Nginx服务器的代理服务
 ## 正向代理
