@@ -219,6 +219,14 @@ index指令有两个作用：一是用户在发出请求访问网站时，请求
 语法：`auth_basic_user_file file;`  
  + file，密码文件的绝对路径。
 
+# Nginx服务器的高级配置
+## 针对IPv4的内核7个参数的配置优化
+这里提及的参数是和IPv4网络有关的Linux内核参数。我们可以将这些内核参数的值追加到Linux系统的/etc/sysctl.conf文件中，然后使用如下命令使修改生效：
+`#/sbin/sysctl -p`  
+- 1.net.core.netdev_max_backlog参数
+表示当每个网络接口接收数据包的速率比内核处理这些包的速率快时，允许发送到队列的数据包的最大数目。一般默认值为128。Nginx服务器中定义的NGX_LISTEN_BACKLOG默认为511。可以设置为：
+`net.core.netdev_max_backlog = 262144`
+
 
 
 
