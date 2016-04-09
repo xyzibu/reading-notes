@@ -1,17 +1,65 @@
 # Nginx服务器的基础配置
-## 配置运行Nginx服务器用户（组）
-- user指令  
+## 用于调试进程和定位问题的配置项
+- 1.是否以守护进程方式运行Nginx
+语法：`daemon on | off;`  
+默认：`daemon on;`  
+调试时可以关闭守护进程方式。
+
+- 2.是否以master/worker方式工作
+语法：`master_process on | off;`  
+默认：`master_process on;`  
+如果用off关闭了master_process方式，就不会fork出worker子进程来处理请求，而是用master进程自身来处理请求。
+
+- 3.是否处理几个特殊的调试点
+语法：`debug_points [stop | abort]`  
+Nginx在一些关键的错误逻辑中设置了调试点。如果设置了debug_points为stop，那么Nginx的代码执行到这些调试点时就会发出SIGSTOP信号以用于调试。如果debug_points设置为abort，则会产生一个coredump文件，可以使用gdb来查看Nginx当时的各种信息。  
+通常不会使用这个配置项。
+
+- 4.仅对指定的客户端输出debug级别的日志
+语法：`debug_connection [IP | CIDR]`  
+作用域：events块  
+仅仅来处IP地址的请求才会输出debug级别的日志，其他请求仍然沿用error_log中配置的日志级别。  
+此配置对修复Bug很有用，特别是定位高并发请求下才会发生的问题。
+
+- 5.限制coredump核心转储文件的大小
+语法：`worker_rlimit_core size;`  
+
+- 6.指定coredump文件生成目录
+语法：`working_directory path;`  
+worker进程的工作目录。此配置项的唯一用途就是设置coredump文件所放置的目录，协助定位问题。因此，需要确保worker进程有权限向working_directory指定的目录中写入文件。
+
+## 正常运行的配置项
+- 1.配置Nginx进程PID存放路径 
+作用域：全局块  
+语法：`pid file;`  
+默认：`pid logs/nginx.pid;`  
+ + file，指定存放路径和文件名称。可以是绝对路径，也可以是以Nginx安装目录为根目录的相对路径。  
+
+- 2.配置运行Nginx服务器用户（组）  
 作用域：全局块  
 语法： `user user [group];`  
  + user，指定可以运行Nginx服务器的用户。
  + group，可选项，指定可以运行Nginx服务器的用户组。  
 只有被设置的用户或者用户组才有权限启动Nginx进程，如果是其他用户尝试启动Nginx进程，将会报错。  
 如果希望所有用户都可以启动Nginx进程，有两种方法：  
-1.将此指令行注释掉：  
+1).将此指令行注释掉：  
 `#user user [group];`  
-2.将用户（和用户组）设置为nobody：  
+2).将用户（和用户组）设置为nobody：  
 `user nobody nobody;`  
 这也是user指令的默认配置。  
+
+- 3.配置文件的引入   
+作用域：任意地方  
+语法：`include file;`  
+ + file，要引入的配置文件，支持相对路径。
+
+- 4.配置错误日志的存放路径    
+作用域：全局块、http块、server块、location块  
+语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];` 
+
+
+
+
 
 ## 配置允许生成的worker process数
 - worker_process指令  
@@ -21,23 +69,10 @@
  + auto，设置此值，Nginx进程将会自动检测。  
 默认的配置中，number=1。
 
-## 配置Nginx进程PID存放路径
-- pid指令  
-作用域：全局块  
-语法：`pid file;`  
- + file，指定存放路径和文件名称。  
-配置文件默认将此文件存放在Nginx安装目录logs下，名字为nignx.pid。file可以是绝对路径，也可以是以Nginx安装目录为根目录的相对路径。
 
-## 配置错误日志的存放路径  
-- error_log指令  
-作用域：全局块、http块、server块、location块  
-语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];`  
+ 
 
-## 配置文件的引入  
-- include指令  
-作用域：任意地方  
-语法：`include file;`  
- + file，要引入的配置文件，支持相对路径。
+
 
 ## 设置网络连接的序列化
 - accept_mutex指令  
