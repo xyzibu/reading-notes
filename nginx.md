@@ -42,9 +42,9 @@ worker进程的工作目录。此配置项的唯一用途就是设置coredump文
  + group，可选项，指定可以运行Nginx服务器的用户组。  
 只有被设置的用户或者用户组才有权限启动Nginx进程，如果是其他用户尝试启动Nginx进程，将会报错。  
 如果希望所有用户都可以启动Nginx进程，有两种方法：  
-1).将此指令行注释掉：  
+(1).将此指令行注释掉：  
 `#user user [group];`  
-2).将用户（和用户组）设置为nobody：  
+(2).将用户（和用户组）设置为nobody：  
 `user nobody nobody;`  
 这也是user指令的默认配置。  
 
@@ -57,7 +57,13 @@ worker进程的工作目录。此配置项的唯一用途就是设置coredump文
 作用域：全局块、http块、server块、location块  
 语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];` 
 
+- 5.更改一个worker进程的最大打开文件数限制
+语法：`worker_rlimit_nofile number;`  
+如果没设置的话，这个值为操作系统的限制。设置后你的操作系统和Nginx可以处理比“ulimit -a”更多的文件，所以把这个值设高，这样Nginx就不会有“too many open files”问题了。
 
+- 6.限制信号队列
+语法：`worker_rlimit_sigpending number;`  
+设置每个用户发往Nginx的信号队列的大小。当某个用户的信号队列满了，这个用户再发送的信号量会被丢掉。
 
 
 
