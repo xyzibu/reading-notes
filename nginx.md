@@ -28,6 +28,37 @@ Nginx在一些关键的错误逻辑中设置了调试点。如果设置了debug_
 语法：`working_directory path;`  
 worker进程的工作目录。此配置项的唯一用途就是设置coredump文件所放置的目录，协助定位问题。因此，需要确保worker进程有权限向working_directory指定的目录中写入文件。
 
+## 优化性能的配置项
+- 1.配置允许生成的worker process数
+作用域：全局块  
+语法：`worker_process number | auto;`  
+ + number，指定Nginx进程最多可以产生的worker process数。
+ + auto，设置此值，Nginx进程将会自动检测。  
+默认的配置中，number=1。
+
+- 2.绑定Nginx worker进程到指定的CPU内核
+语法：`worker_cpu_affinity cpumask [cpumask...]`  
+例如，如果有4颗CPU内核，就可以进行如下配置：  
+```
+worker_process = 4;
+worker_cpu_affinity 1000 0100 0010 0001;
+```
+
+- 3.SSL配件加速
+语法：`ssl_engine device;`  
+如果服务器上有SSL硬件加速设备，那么就可以进行配置以加快SSL协议的处理速度。用户可以使用OpenSSL提供的命令来查看是否有SSL硬件加速设备：  
+`openssl engine -t`
+
+- 4.系统调用gettimeofday的执行频率
+语法：`timer_resolution t;`  
+默认情况下，每次内核的事件调用（如epoll、select、poll、kqueue等）返回时，都会执行一次gettimeofday，实现用内核中的时钟来更新Nginx中的缓存时钟。在早期的Linux内核中，gettimeofday的执行代价不小，因为中间有一次内核态到用户态的内存复制。当需要降低gettimeofday的调用频率时，可以使用timer_resolution配置。  
+但是在目前的大多数内核中，gettimeofday只是一次vsyscall，仅仅对共享内存页中的数据做访问，并不是通常的系统调用，代价并不大，一般不必使用这个配置。  
+
+- 5.Nginx worker进程优先级设置
+语法：`worker_priority nice;`  
+默认：`worker_priority 0;`  
+
+
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径 
 作用域：全局块  
@@ -67,13 +98,6 @@ worker进程的工作目录。此配置项的唯一用途就是设置coredump文
 
 
 
-## 配置允许生成的worker process数
-- worker_process指令  
-作用域：全局块  
-语法：`worker_process number | auto;`  
- + number，指定Nginx进程最多可以产生的worker process数。
- + auto，设置此值，Nginx进程将会自动检测。  
-默认的配置中，number=1。
 
 
  
