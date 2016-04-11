@@ -21,7 +21,7 @@ Nginx在一些关键的错误逻辑中设置了调试点。如果设置了debug_
 仅仅来处IP地址的请求才会输出debug级别的日志，其他请求仍然沿用error_log中配置的日志级别。  
 此配置对修复Bug很有用，特别是定位高并发请求下才会发生的问题。
 
-- 5.限制coredump核心转储文件的大小 
+- 5.限制coredump核心转储文件的大小  
 语法：`worker_rlimit_core size;`  
 
 - 6.指定coredump文件生成目录  
