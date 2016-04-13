@@ -1,4 +1,3 @@
-
 # Nginx服务器的基础配置
 ## 用于调试进程和定位问题的配置项
 - 1.是否以守护进程方式运行Nginx  
@@ -59,6 +58,41 @@ worker_cpu_affinity 1000 0100 0010 0001;
 语法：`worker_priority nice;`  
 默认：`worker_priority 0;`  
 
+## 事件类配置项
+- 1.设置网络连接的序列化  
+作用域：events块   
+语法：`accept_mutex on | off;`  
+默认：`accept_mutex on;`    
+accept_mutex可以让多个worker进程轮流地、序列化地与新的客户端建立TCP连接。当某一个worker进程建立的连接数量达到worker_connections配置的最大连接数的7/8时，会大大地减小该worker进程试图建立新TCP连接的机会，以此实现所有worker进程之上处理的客户端请求数尽量接近。  
+accept锁默认是开启的，如果关闭它，那么建立TCP连接的耗时会更短，但worker进程之间的负载会非常不均衡，因此不建议关闭它。    
+   
+- 2.lock文件的路径
+语法：`lock_file path/file;`  
+默认：`lock_file logs/nginx.lock;`  
+accept锁可能需要这个lock文件，如果accpet锁关闭，lock_file配置完全不生效。如果打开了accept锁，并且由于编译程序、操作系统架构等因素导致Nginx不支持原子锁，这时才会使用文件锁实现accept锁，这样lock_file指定的lock文件才会生效。  
+
+- 3.使用accept锁后到真正建立连接之间的延迟时间  
+语法：`accept_mutex_delay Nms;`  
+默认：`accept_mutex_delay 500ms;`  
+在使用accept锁后，同一时间只有一个worker进程能够获取到accept锁。这个accept锁不是阻塞锁，如果取不到会立即返回。如果有一个worker进程试图取accept锁而没有取到，它至少要等accept_mutex_delay定义的时间间隔后才能再次试图获取锁。
+
+- 4.设置是否允许同时连接多个网络 
+作用域：events块  
+语法：`multi_accept on | off;`  
+此指令默认为关闭（off）指令，即每个worker process一次只能接收一个新到达的网络连接。
+
+- 5.事件驱动模型的选择 
+作用域：events块  
+语法：`use method;`  
+ + method，select、poll、kqueue、epoll、rtsig、/dev/poll、eventport
+
+- 6.配置最大连接数   
+作用域：events块  
+语法：`worker_connections number;`  
+用来设置允许每一个worker process同时开启的最大连接数。此指令的默认设置为512。  
+**注意**  
+这里的number不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
+
 
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径   
@@ -105,33 +139,7 @@ worker_cpu_affinity 1000 0100 0010 0001;
 
 
 
-## 设置网络连接的序列化
-- accept_mutex指令  
-作用域：events块  
-当其设置为开启的时候，将会对多个Nginx进程接收连接进行序列化，防止多个进程对连接的争抢。  
-语法：`accept_mutex on | off;`  
-此指令默认为开启（on）状态。  
 
-## 设置是否允许同时连接多个网络
-- multi_acept指令  
-作用域：events块  
-语法：`multi_accept on | off;`  
-此指令默认为关闭（off）指令，即每个worker process一次只能接收一个新到达的网络连接。
-
-## 事件驱动模型的选择
-- use指令  
-作用域：events块  
-语法：`use method;`  
- + method，select、poll、kqueue、epoll、rtsig、/dev/poll、eventport
-
-## 配置最大连接数
-- worker_connections指令  
-用来设置允许每一个worker process同时开启的最大连接数。  
-作用域：events块  
-语法：`worker_connections number;`  
-此指令的默认设置为512。  
-**注意**  
-这里的nuber不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
 
 ##　自定义服务日志
 - access_log指令  
