@@ -236,6 +236,61 @@ location @fallback {
 配置块：server、location  
 尝试按照顺序访问每一个path，如果可以有效的读取，就直接向用户返回这个path对应的文件结束请求，否则继续向下访问。如果所有的path都找不到有效的文件，就重定向到最后的参数uri上。
 
+### 内存及磁盘资源的分配
+- 1.HTTP包体只存储到磁盘文件中  
+语法：`client_body_in_file_only on | clean | off;`  
+默认：`client_body_in_file_only off;`  
+配置块：http、server、location  
+当值为非off时，用户请求中的HTTP包体一律存储到磁盘文件中，即使只有0字节也会存储为文件。当请求结束时，如果配置为on，则这个文件不会被删除（该配置一般用于调试、定位问题），但如果配置为clean，则会删除该文件。  
+
+- 2.HTTP包体尽量写入到一个内存buffer中  
+语法：`client_body_in_single_buffer on | off;`  
+默认：`client_body_in_single_buffer off;`  
+配置块：http、server、location  
+用户请求中的HTTP包体一律存储到内存buffer中。如果HTTP包体的大小超过了client_body_buffer_size设置的值，包体还是会 写入到磁盘文件中。  
+
+- 3.存储HTTP头部的内存buffer大小  
+语法：`client_header_buffer_size size;`  
+默认：`client_header_buffer_size 1k;`  
+配置块：http、server  
+此配置定义了正常情况下Nginx接收用户请求中HTTP header部分（包括HTTP行和HTTP头部）时分配的内存buffer大小。有时，请求中的HTTP header部分可能会超过这个大小，这时large_client_header_buffers定义的buffer将会生效。
+
+- 4.存储超大HTTP头部的内存buffer大小  
+语法：`large_client_header_buffers number size;`  
+默认：`large_client_header_buffers 4 8k;`  
+配置块：http、server  
+此配置定义了Nginx接收一个超大HTTP头部请求的buffer个数和每个buffer的大小。
+
+- 5.存储HTTP包体的内存buffer大小  
+语法：`client_body_buffer_size size;`  
+默认：`client_body_buffer_size 8k/16k;`  
+配置块：http、server、location  
+此配置定义了Nginx接收HTTP包体的内存缓冲区大小。HTTP包体会先接收到指定的这块缓存中，之后才决定是否写入磁盘。  
+**注意** 
+如果用户请求中含有HTTP头部Content-Length，并且其标识的长度小于定义的buffer大小，那么Nginx会自动降低本次请求所使用的内存buffer，以降低内存消耗。  
+
+- 6.HTTP包体的临时存放目录  
+语法：`client_body_temp_path dir-path [ level1 [ level2 [ level3 ]]];`  
+默认：`client_body_temp_path client_body_temp;`  
+配置块：http、server、location  
+在接收HTTP包体时，如果包体的大小大于client_body_buffer_size，则会以一个递增的整数命名并存放到client_body_temp_path指定的目录中。后面跟着的level1、level2、level3是为了防止一个目录下的文件数量太多，从而导致性能下降，因此使用了level参数，这样可以按照临时文件名最多再加三层目录，具体的值代表目录名的位数。例如：  
+`client_body_temp_path /opt/nginx/client_temp 1 2;`  
+如果新上传的HTTP包体使用123456作为临时文件名，就会被存放在这个目录中。  
+`/opt/nginx/client_temp/6/45/123456`  
+
+- 7.connection_pool_size  
+语法：`connection_pool_size size;`  
+默认：`connection_pool_size 256;`  
+配置块：http、server  
+Nginx对于每个建立成功的TCP连接会预先分配一个内存池，上面的size配置项将指定这个内存池的初始大小（即ngx_connection_t结构体中的pool内存池初始大小），用于减少内核对于小块内存的分配次数。需慎重设置，因为更大的size会使服务器消耗的内存增多，而更小的size则会引发更多的内存分配次数。
+
+- 8.request_pool_size  
+语法：`request_pool_size size;`  
+默认：`request_pool_size 4k;`  
+配置块：http、server  
+Ngin开始处理HTTP请求时，将会为每个请求都分配一个内存池，size配置项将指定这个内存池的初始大小（即ngx_http_request_t结构中的pool内存池初始大小），用于减少内核对于小块内存的分配次数。TCP连接关闭时会销毁connection_pool_size指定的连接内存池，HTTP请求结束时会销毁request_pool_size指定的HTTP请求内存池，但它们的创建、销毁时间并不一致，因为一个TCP连接可能被复用于多个HTTP请求。
+  
+
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径   
 配置块：全局块  
