@@ -290,6 +290,33 @@ Nginx对于每个建立成功的TCP连接会预先分配一个内存池，上面
 配置块：http、server  
 Ngin开始处理HTTP请求时，将会为每个请求都分配一个内存池，size配置项将指定这个内存池的初始大小（即ngx_http_request_t结构中的pool内存池初始大小），用于减少内核对于小块内存的分配次数。TCP连接关闭时会销毁connection_pool_size指定的连接内存池，HTTP请求结束时会销毁request_pool_size指定的HTTP请求内存池，但它们的创建、销毁时间并不一致，因为一个TCP连接可能被复用于多个HTTP请求。
   
+### 网络连接的设置  
+- 1.读取HTTP头部的超时时间  
+语法：`client_header_timeout time;`（默认单位：秒）  
+默认：`client_header_timeout 60;`  
+配置块：http、server、location  
+客户端与服务器建立连接后将开始接收HTTP头部，在这个过程中，如果在一个时间间隔内没有读取到客户端发来的字节，则认为超时，并向客户端返回408（“Request timed out”）响应。  
+
+- 2.读取HTTP包体的超时时间  
+语法：`client_body_timeout time;`(默认单位：秒）  
+默认：`client_body_timeout 60;`  
+配置块：http、server、location  
+
+- 3.发送响应的超时时间  
+语法：`send_timeout time;`  
+默认：`send_timeout 60;`  
+配置块：http、server、location  
+Nginx服务器向客户端发送了数据包，但客户端一直没有去接收这个数据包。如果某个连接超过send_timeout定义的超时时间，那么Nginx将会关闭这个连接。  
+
+- 4.reset_timeout_connection  
+语法：`reset_timeout_connection on | off;`  
+默认：`reset_timeout_connection off;`  
+配置块：http、server、location  
+连接超时后将通过向客户端发送RST包来直接重置连接。这个选项打开后，Nginx会在某个连接超时后，不是使用正常情形下的四次握手关闭TCP连接，而是直接向客户发送RST重置包，不再等待用户的应答，直接释放Nginx服务器上关于这个套接字使用的所有缓存。相比正常的关闭方式，它使得服务器避免产生许多处于FIN_WAIT_1、FIN_WAIT_2、FIN_WAIT状态的TCP连接。  
+使用RST重置包关闭连接会带来一些问题，默认情况下不会开启。  
+
+
+
 
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径   
