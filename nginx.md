@@ -316,6 +316,26 @@ Nginx服务器向客户端发送了数据包，但客户端一直没有去接收
 连接超时后将通过向客户端发送RST包来直接重置连接。这个选项打开后，Nginx会在某个连接超时后，不是使用正常情形下的四次握手关闭TCP连接，而是直接向客户发送RST重置包，不再等待用户的应答，直接释放Nginx服务器上关于这个套接字使用的所有缓存。相比正常的关闭方式，它使得服务器避免产生许多处于FIN_WAIT_1、FIN_WAIT_2、FIN_WAIT状态的TCP连接。  
 使用RST重置包关闭连接会带来一些问题，默认情况下不会开启。  
 
+- 5.lingering_close  
+语法：`lingering_close off | on | always;`  
+默认：`lingering_close on;`  
+配置块：http、server、location  
+该配置控制Nginx关闭用户连接的方式。always表示关闭用户连接前必须无条件地处理连接上所有用户发送的数据。off表示关闭连接时完全不管连接上是否已经有准备就绪的来自用户的数据。on是中间值，一般情况下在关闭连接前都会处理连接上的用户发送的数据，除了有些情况下在业务上认定这之后的数据是不必要的。  
+
+- 6.lingering_time  
+语法：`lingering_time time;`  
+默认：`lingering_time 30s;`  
+配置块：http、server、location  
+lingering_close启用后，此配置对于上传大文件很有用。当用户请求的Content-Length大于max_client_body_size配置时，Nginx服务器会立刻向用户发送413（Request entity too large）响应。但是很多客户端可能不管413返回值，仍然持续不断地上传HTTP body，这时，经过了lingering_time设置的时间后，Nginx将不管用户是否仍在上传，都会把连接关闭掉。  
+
+- 7.lingering_timeout  
+语法：`lingering_timeout time;`  
+默认：`lingering_timeout 5s;`  
+配置块：http、server、location  
+lingering_close生效后，在关闭连接前，会检测是否有用户发送的数据到达服务器，如果超过lingering_timeout时间后还没有数据可读，就直接关闭连接；否则，必须在读取完连接缓冲区上的数据并丢弃掉后才会关闭连接。  
+
+
+   
 
 
 
