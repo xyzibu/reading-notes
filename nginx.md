@@ -334,9 +334,35 @@ lingering_close启用后，此配置对于上传大文件很有用。当用户�
 配置块：http、server、location  
 lingering_close生效后，在关闭连接前，会检测是否有用户发送的数据到达服务器，如果超过lingering_timeout时间后还没有数据可读，就直接关闭连接；否则，必须在读取完连接缓冲区上的数据并丢弃掉后才会关闭连接。  
 
+- 8.对某些浏览器禁用keepalive功能  
+语法：`keepalive_disable [ msie6 | safari | none ] ...;`  
+默认：keepalive_disable  msie6 safari  
+配置块：http、server、location  
+HTTP请求中的keepalive功能是为了让多个请求复用一个HTTP长连接，这个功能对服务器的性能提高是很有帮助的。但有些浏览器，如IE 6和Safari，它们对于使用keepalive功能的POST请求处理有功能性问题。因此，针对IE 6及其早期版本、Safari浏览器默认是禁用keepalive功能的。
 
+- 9.keepalive超时时间  
+语法：`keepalive_timeout time;`默认单位：秒  
+默认：`keepalive_timeout 75;`  
+配置块：http、server、location  
+一个keepalive连接在闲置超过一定时间后，服务器和浏览器都会去关闭这个连接。  
+
+- 10.一个keepalive长连接上允许承载的请求最大数  
+语法：`keepalive_requests n;`  
+默认：`keepalive_requests 100; ` 
+配置块：http、server、location  
+一个keepalive连接上默认最多只能发送100个请求。
    
+- 11.tcp_nodelay  
+语法：`tcp_nodelay on | off;`  
+默认：`tcp_nodelay on;`  
+配置块：http、server、location  
+确定对keepalive连接是否使用TCP_NODELAY选项。
 
+- 12.tcp_nopush  
+语法：`tcp_nopush on | off;`  
+默认：`tcp_nopush off;`  
+配置块：http、server、location  
+在打开sendfile选项时，确定是否开启FreeBSD系统上的TCP_NOPUSH或Linux系统上的TCP_CORK功能。打开tcp_nopush后，将会在发送响应时把整个响应包头放到一个TCP包中发送。
 
 
 ## 正常运行的配置项
