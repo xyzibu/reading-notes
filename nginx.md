@@ -364,6 +364,28 @@ HTTP请求中的keepalive功能是为了让多个请求复用一个HTTP长连接
 配置块：http、server、location  
 在打开sendfile选项时，确定是否开启FreeBSD系统上的TCP_NOPUSH或Linux系统上的TCP_CORK功能。打开tcp_nopush后，将会在发送响应时把整个响应包头放到一个TCP包中发送。
 
+### MIME类型的设置
+- 1.MIME type与文件扩展的映射  
+语法：`type {...};`  
+配置块：http、server、location  
+定义MIME type到文件扩展名的映射。多个扩展名可以映射到同一个MIME type。  
+- 2.默认MIME type  
+语法：`default_type MIME-type;`  
+默认：`default_type text/plain;`  
+配置块：http、server、location  
+当找不到相应的MIME type与文件扩展名之间的映射时，使用默认的MIME type作为HTTP header中的Content-Type。
+
+- 3.types_hash_bucket_size  
+语法：`types_hash_bucket_size size;`  
+默认：`types_hash_bucket_size 32|64|128;`  
+配置块：http、server、location  
+为了快速寻找到相应MIME type，Nginx使用散列表来存储MIME type与文件扩展名。types_hash_bucket_size 设置了每个散列桶占用的内存大小。
+
+- 4.types_hash_max_size  
+语法：`types_hash_max_size size;`  
+默认：`types_hash_max_size 1024;`  
+配置块：http、server、location  
+types_hash_max_size影响散列表的冲突率。types_hash_max_size越大，就会消耗更多的内存，但散列key的冲突率会降低，检索速度就更快。types_hash_max_size越小，消耗的内存就越小，但散列key的冲突率可能上升。
 
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径   
