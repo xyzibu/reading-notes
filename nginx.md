@@ -387,6 +387,49 @@ HTTP请求中的keepalive功能是为了让多个请求复用一个HTTP长连接
 配置块：http、server、location  
 types_hash_max_size影响散列表的冲突率。types_hash_max_size越大，就会消耗更多的内存，但散列key的冲突率会降低，检索速度就更快。types_hash_max_size越小，消耗的内存就越小，但散列key的冲突率可能上升。
 
+### 对客户端请求的限制
+- 1.按HTTP方法名限制用户请求  
+语法：`limit_except method ... {...}`  
+配置块：location  
+Nginx通过limit_except后面指定的方法名来限制用户请求。方法名可取值包括：GET、HEAD、POST、PUT、DELETE、MKCOL、COPY、MOVE、OPTIONS、PROPFIND、PROPPATCH、LOCK、UNLOCK或者PATCH。例如：  
+```
+limit_except GET {
+    allow 192.168.1.0/32;
+    deny  all;
+}
+```
+**注意**允许GET方法就意味着也允许HEAD方法。因此，上面这段代码表示的是禁止GET方法和HEAD方法，但其他HTTP方法是允许的。
+
+- 2.HTTP请求包体的最大值  
+语法：`client_max_body_size size;`  
+默认：`client_max_body_size 1m;`  
+配置块：http、server、location  
+浏览器在发送含有较大HTTP包体的请求时，其头部会有一个Content-Length字段，client_max_body_size是用来限制Content-Length所示值的大小的。因此，这个限制包体的配置非常有用处，因为不用等Nginx接收完所有的HTTP包体—这有可能消耗很长时间—就可以告诉用户请求过大不被接受。例如，用户试图上传一个10GB的文件，Nginx在收完包头后，发现Content-Length超过client_max_body_size定义的值，就直接发送413 ("Request Entity Too Large")响应给客户端。
+
+- 3.对请求的限速  
+语法：`limit_rate speed; ` 
+默认：`limit_rate 0;`  
+配置块：http、server、location、if  
+此配置是对客户端请求限制每秒传输的字节数。speed可以多种单位，默认参数为0，表示不限速。  
+针对不同的客户端，可以用$ limit_rate参数执行不同的限速策略。例如：
+```
+server {
+ if ($slow) {
+  set $limit_rate  4k;
+ }
+}
+```
+
+- 4.limit_rate_after  
+语法：`limit_rate_after time;`  
+默认：`limit_rate_after 1m;`  
+配置块：http、server、location、if  
+此配置表示Nginx向客户端发送的响应长度超过limit_rate_after后才开始限速。例如：  
+```
+limit_rate_after 1m;  
+limit_rate 100k;
+```  
+
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径   
 配置块：全局块  
