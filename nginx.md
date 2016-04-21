@@ -430,6 +430,34 @@ limit_rate_after 1m;
 limit_rate 100k;
 ```  
 
+###　文件操作的优化
+－ 1.sendfile系统调用  
+语法：`sendfile on | off;`  
+默认：`sendfile off;`  
+配置块：http、server、location
+可以启用Linux上的sendfile系统调用来发送文件，它减少了内核态与用户态之间的两次内存复制，这样就会从磁盘中读取文件后直接在内核态发送到网卡设备，提高了发送文件的效率。
+
+- 2.AIO系统调用  
+语法：`aio on | off;`  
+默认：`aio off;`  
+配置块：http、server、location  
+此配置项表示是否在FreeBSD或Linux系统上启用内核级别的异步文件I/O功能。注意，它与sendfile功能是互斥的。
+
+- 3.directio  
+语法：`directio size | off;`  
+默认：`directio off;`  
+配置块：http、server、location  
+此配置项在FreeBSD和Linux系统上使用O_DIRECT选项去读取文件，缓冲区大小为size，通常对大文件的读取速度有优化作用。注意，它与sendfile功能是互斥的。
+
+- 4.directio_alignment  
+语法：`directio_alignment size;`  
+默认：`directio_alignment 512;`  
+配置块：http、server、location  
+它与directio配合使用，指定以directio方式读取文件时的对齐方式。一般情况下，512B已经足够了，但针对一些高性能文件系统，如Linux下的XFS文件系统，可能需要设置到4KB作为对齐方式。
+
+
+
+
 ## 正常运行的配置项
 - 1.配置Nginx进程PID存放路径   
 配置块：全局块  
