@@ -455,6 +455,40 @@ limit_rate 100k;
 配置块：http、server、location  
 它与directio配合使用，指定以directio方式读取文件时的对齐方式。一般情况下，512B已经足够了，但针对一些高性能文件系统，如Linux下的XFS文件系统，可能需要设置到4KB作为对齐方式。
 
+- 5.打开文件缓存  
+语法：`open_file_cache max = N [inactive = time] | off;`  
+默认：`open_file_cache off;`  
+配置块：http、server、location
+文件缓存会在内存中存储以下3种信息：  
+文件句柄、文件大小和上次修改时间。  
+已经打开过的目录结构。  
+没有找到的或者没有权限操作的文件信息。  
+这样，通过读取缓存就减少了对磁盘的操作。  
+该配置项后面跟3种参数。  
+  + max：表示在内存中存储元素的最大个数。当达到最大限制数量后，将采用LRU（Least Recently Used）算法从缓存中淘汰最近最少使用的元素。  
+  + inactive：表示在inactive指定的时间段内没有被访问过的元素将会被淘汰。默认时间为60秒。  
+  + off：关闭缓存功能。  
+
+- 6.是否缓存打开文件错误的信息  
+语法：`open_file_cache_errors on | off;`  
+默认：`open_file_cache_errors off;`  
+配置块：http、server、location  
+此配置项表示是否在文件缓存中缓存打开文件时出现的找不到路径、没有权限等错误信息。  
+
+- 7.不被淘汰的最小访问次数  
+语法：`open_file_cache_min_uses number;`  
+默认：`open_file_cache_min_uses 1;`  
+配置块：http、server、location
+它与open_file_cache中的inactive参数配合使用。如果在inactive指定的时间段内，访问次数超过了open_file_cache_min_uses指定的最小次数，那么将不会被淘汰出缓存。
+
+- 8.检验缓存中元素有效性的频率
+语法：`open_file_cache_valid time;`  
+默认：`open_file_cache_valid 60s;`  
+配置块：http、server、location
+默认为每60秒检查一次缓存中的元素是否仍有效。
+
+
+
 
 
 
