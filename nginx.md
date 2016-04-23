@@ -1,4 +1,4 @@
-
+ 
 # Nginx服务器的基础配置
 ## 用于调试进程和定位问题的配置项
 - 1.是否以守护进程方式运行Nginx  
@@ -487,6 +487,12 @@ limit_rate 100k;
 配置块：http、server、location
 默认为每60秒检查一次缓存中的元素是否仍有效。
 
+### 对客户端请求的特殊处理
+- 1.忽略不合法的HTTP头部  
+语法：`ignore_invalid_headers on | off;`  
+默认：`ignore_invalid_headers on;`  
+配置块：http、server  
+如果将其设置为off，那么当出现不合法的HTTP头部时，Nginx会拒绝服务，并直接向用户发送400（Bad Request）错误。如果将其设置为on，则会忽略此HTTP头部。
 
 
 
