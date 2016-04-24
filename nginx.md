@@ -494,7 +494,11 @@ limit_rate 100k;
 配置块：http、server  
 如果将其设置为off，那么当出现不合法的HTTP头部时，Nginx会拒绝服务，并直接向用户发送400（Bad Request）错误。如果将其设置为on，则会忽略此HTTP头部。
 
-
+- 2.HTTP头部是否允许下画线  
+语法：`underscores_in_headers on | off;`  
+默认：`underscores_in_headers off;`  
+配置块：http、server  
+默认为off，表示HTTP头部的名称中不允许带“_”（下画线）。
 
 
 
