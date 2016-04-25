@@ -500,6 +500,19 @@ limit_rate 100k;
 配置块：http、server  
 默认为off，表示HTTP头部的名称中不允许带“_”（下画线）。
 
+- 3.对If-Modified-Since头部的处理策略  
+语法：`if_modified_since [off|exact|before];`  
+默认：`if_modified_since exact;`  
+配置块：http、server、location  
+出于性能考虑，Web浏览器一般会在客户端本地缓存一些文件，并存储当时获取的时间。这样，下次向Web服务器获取缓存过的资源时，就可以用If-Modified-Since头部把上次获取的时间捎带上，而if_modified_since将根据后面的参数决定如何处理If-Modified-Since头部。  
+相关参数说明如下。  
+  + off：表示忽略用户请求中的If-Modified-Since头部。这时，如果获取一个文件，那么会正常地返回文件内容。HTTP响应码通常是200。
+   + exact：将If-Modified-Since头部包含的时间与将要返回的文件上次修改的时间做精确比较，如果没有匹配上，则返回200和文件的实际内容，如果匹配上，则表示浏览器缓存的文件内容已经是最新的了，没有必要再返回文件从而浪费时间与带宽了，这时会返回304 Not Modified，浏览器收到后会直接读取自己的本地缓存。
+  + before：是比exact更宽松的比较。只要文件的上次修改时间等于或者早于用户请求中的If-Modified-Since头部的时间，就会向客户端返回304 Not Modified。
+
+
+
+
 
 
 ## 正常运行的配置项
