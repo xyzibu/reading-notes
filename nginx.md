@@ -516,6 +516,11 @@ limit_rate 100k;
 配置块：http、server、location  
 此配置项表示当处理用户请求且需要访问文件时，如果没有找到文件，是否将错误日志记录到error.log文件中。这仅用于定位问题。
 
+- 5.merge_slashes  
+语法：`merge_slashes on | off;`  
+默认：`merge_slashes on;`  
+配置块：http、server、location  
+此配置项表示是否合并相邻的“/”，例如，//test///a.txt，在配置为on时，会将其匹配为location /test/a.txt；如果配置为off，则不会匹配，URI将仍然是//test///a.txt。
 
 
 
