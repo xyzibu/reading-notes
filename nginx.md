@@ -522,6 +522,11 @@ limit_rate 100k;
 配置块：http、server、location  
 此配置项表示是否合并相邻的“/”，例如，//test///a.txt，在配置为on时，会将其匹配为location /test/a.txt；如果配置为off，则不会匹配，URI将仍然是//test///a.txt。
 
+- 6.DNS解析地址  
+语法：`resolver address ...;`  
+配置块：http、server、location  
+设置DNS名字解析服务器的地址，例如：  
+`resolver 127.0.0.1 192.0.2.1;`
 
 
 ## 正常运行的配置项
