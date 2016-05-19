@@ -1,3 +1,4 @@
+ 
 # Nginx服务器的基础配置
 ## 用于调试进程和定位问题的配置项
 - 1.是否以守护进程方式运行Nginx  
@@ -17,7 +18,7 @@ Nginx在一些关键的错误逻辑中设置了调试点。如果设置了debug_
 
 - 4.仅对指定的客户端输出debug级别的日志  
 语法：`debug_connection [IP | CIDR]`  
-作用域：events块  
+配置块：events块  
 仅仅来处IP地址的请求才会输出debug级别的日志，其他请求仍然沿用error_log中配置的日志级别。  
 此配置对修复Bug很有用，特别是定位高并发请求下才会发生的问题。
 
@@ -30,7 +31,7 @@ worker进程的工作目录。此配置项的唯一用途就是设置coredump文
 
 ## 优化性能的配置项
 - 1.配置允许生成的worker process数  
-作用域：全局块  
+配置块：全局块  
 语法：`worker_process number | auto;`  
  + number，指定Nginx进程最多可以产生的worker process数。
  + auto，设置此值，Nginx进程将会自动检测。  
@@ -58,138 +59,58 @@ worker_cpu_affinity 1000 0100 0010 0001;
 语法：`worker_priority nice;`  
 默认：`worker_priority 0;`  
 
-
-## 正常运行的配置项
-- 1.配置Nginx进程PID存放路径   
-作用域：全局块  
-语法：`pid file;`  
-默认：`pid logs/nginx.pid;`  
- + file，指定存放路径和文件名称。可以是绝对路径，也可以是以Nginx安装目录为根目录的相对路径。  
-
-- 2.配置运行Nginx服务器用户（组）  
-作用域：全局块  
-语法： `user user [group];`  
- + user，指定可以运行Nginx服务器的用户。
- + group，可选项，指定可以运行Nginx服务器的用户组。  
-只有被设置的用户或者用户组才有权限启动Nginx进程，如果是其他用户尝试启动Nginx进程，将会报错。  
-如果希望所有用户都可以启动Nginx进程，有两种方法：  
-(1).将此指令行注释掉：  
-`#user user [group];`  
-(2).将用户（和用户组）设置为nobody：  
-`user nobody nobody;`  
-这也是user指令的默认配置。  
-
-- 3.配置文件的引入   
-作用域：任意地方  
-语法：`include file;`  
- + file，要引入的配置文件，支持相对路径。
-
-- 4.配置错误日志的存放路径    
-作用域：全局块、http块、server块、location块  
-语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];` 
-
-- 5.更改一个worker进程的最大打开文件数限制  
-语法：`worker_rlimit_nofile number;`  
-如果没设置的话，这个值为操作系统的限制。设置后你的操作系统和Nginx可以处理比“ulimit -a”更多的文件，所以把这个值设高，这样Nginx就不会有“too many open files”问题了。
-
-- 6.限制信号队列  
-语法：`worker_rlimit_sigpending number;`  
-设置每个用户发往Nginx的信号队列的大小。当某个用户的信号队列满了，这个用户再发送的信号量会被丢掉。
-
-
-
-
-
- 
-
-
-
-## 设置网络连接的序列化
-- accept_mutex指令  
-作用域：events块  
-当其设置为开启的时候，将会对多个Nginx进程接收连接进行序列化，防止多个进程对连接的争抢。  
+## 事件类配置项
+- 1.设置网络连接的序列化  
+配置块：events块   
 语法：`accept_mutex on | off;`  
-此指令默认为开启（on）状态。  
+默认：`accept_mutex on;`    
+accept_mutex可以让多个worker进程轮流地、序列化地与新的客户端建立TCP连接。当某一个worker进程建立的连接数量达到worker_connections配置的最大连接数的7/8时，会大大地减小该worker进程试图建立新TCP连接的机会，以此实现所有worker进程之上处理的客户端请求数尽量接近。  
+accept锁默认是开启的，如果关闭它，那么建立TCP连接的耗时会更短，但worker进程之间的负载会非常不均衡，因此不建议关闭它。    
+   
+- 2.lock文件的路径
+语法：`lock_file path/file;`  
+默认：`lock_file logs/nginx.lock;`  
+accept锁可能需要这个lock文件，如果accpet锁关闭，lock_file配置完全不生效。如果打开了accept锁，并且由于编译程序、操作系统架构等因素导致Nginx不支持原子锁，这时才会使用文件锁实现accept锁，这样lock_file指定的lock文件才会生效。  
 
-## 设置是否允许同时连接多个网络
-- multi_acept指令  
-作用域：events块  
+- 3.使用accept锁后到真正建立连接之间的延迟时间  
+语法：`accept_mutex_delay Nms;`  
+默认：`accept_mutex_delay 500ms;`  
+在使用accept锁后，同一时间只有一个worker进程能够获取到accept锁。这个accept锁不是阻塞锁，如果取不到会立即返回。如果有一个worker进程试图取accept锁而没有取到，它至少要等accept_mutex_delay定义的时间间隔后才能再次试图获取锁。
+
+- 4.设置是否允许同时连接多个网络 
+配置块：events块  
 语法：`multi_accept on | off;`  
 此指令默认为关闭（off）指令，即每个worker process一次只能接收一个新到达的网络连接。
 
-## 事件驱动模型的选择
-- use指令  
-作用域：events块  
+- 5.事件驱动模型的选择 
+配置块：events块  
 语法：`use method;`  
  + method，select、poll、kqueue、epoll、rtsig、/dev/poll、eventport
 
-## 配置最大连接数
-- worker_connections指令  
-用来设置允许每一个worker process同时开启的最大连接数。  
-作用域：events块  
+- 6.配置最大连接数   
+配置块：events块  
 语法：`worker_connections number;`  
-此指令的默认设置为512。  
+用来设置允许每一个worker process同时开启的最大连接数。此指令的默认设置为512。  
 **注意**  
-这里的nuber不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
+这里的number不仅仅包括和前端用户建立的连接数，而是包括所有可能的连接数。另外，number值不能大于操作系统支持打开的最大文件句柄数。
 
-##　自定义服务日志
-- access_log指令  
-作用域：http块、server块、location块  
-语法：`access_log path [format [buffer=size]];`  
- + path，配置服务日志的文件存放的路径和名称。
- + format，可选项，自定义服务日志的格式字符串，也可以通过“格式串的名称”使用log_format指令定义好的格式。
- + size，配置临时存放日志的内存缓存区大小。  
-默认配置：`access_log log/access.log combined;`  
-其中，combined为log_format指令默认定义的日志格式字符串的名称。  
-如果要取消记录服务日志的功能，则使用：`access_log off;`  
-
-- log_format指令  
-作用域：http块  
-语法：`log_format name string ...;`  
- + name，格式字符串的名称，默认的名字为combined。
- + string，服务日志的格式字符串。
-
-## 配置允许sendfile方式传输文件
-- sendfile指令  
-作用域：http块、server块、location块  
-语法：`sendfile on | off;`  
-默认值为off。  
-
-- sendfile_max_chunk指令  
-作用域：http块、server块、location块  
-语法：`sendfile_max_chunk size;`  
- + size，如果大于0，Nginx进程的每个worker process每次调用sendfile()传输的数据量最大不能超过这个值；如果设置为0，则无限制。默认值为0。
-  
-## 配置连接超时时间
-- keepalive_timeout指令  
-作用域：http块、server块、location块  
-语法：`keepalive_timeout timeout [header_timeout];`  
- + timeout，服务器端对连接的保持时间，默认值为75s。
- + header_timeout，可选项，在应答报文头的Keep-Alive域设置超时时间：“Keep-Alive:timeout=header_timeout”。
- 
-## 单连接请求数上限
-- keepalive_requests指令  
-作用域：server块、location块  
-Nginx服务器端和用户端建立会话连接后，用户端通过此连接发送请求。此指令用于限制用户通过某一连接向Nginx服务器发送请求的次数。  
-语法：`keepalive_request number;`  
-默认设置为100。  
- 
-## 配置网络监听
-- listen指令  
+## HTTp核心模块配置
+### 虚拟主机与请求的分发
+- 1.配置网络监听   
 配置监听使用listen指令，其配置方法有三种。  
-1.配置监听的IP地址。  
+(1).配置监听的IP地址。  
 语法：  
 ```
 listen address[:port] [default_server] [setfib=number] [backlog=number] [rcvbuf=size] [sendbuf=size] [deferred] 
 [accept_filter=filter] [bind] [ssl];
 ```  
-2.配置监听端口  
+(2).配置监听端口  
 语法：
 ```
 listen port [default_server] [setfib=number] [backlog=number] [rcvbuf=size] [sendbuf=size] [deferred] 
 [accept_filter=filter] [bind] [ipv6only=on|off] [ssl];
 ```  
-3.配置UNIX Domain Socket  
+(3).配置UNIX Domain Socket  
 语法：  
 ```
 listen unix:path [default_server] [backlog=number] [rcvbuf=size] [sendbuf=size] [deferred] 
@@ -208,8 +129,7 @@ listen unix:path [default_server] [backlog=number] [rcvbuf=size] [sendbuf=size] 
  + bind，标识符，使用独立的bind()处理此address:port。一般情况下，对于端口相同而IP地址不同的多个连接，Nginx服务器将只使用一个监听命令，并使用bind()处理端口相同的所有连接。
  + ssl，标识符，设置会话连接使用SSL模式进行，此标识符和Nginx服务器提供的HTTPS服务有关。
  
-## 基于名称的虚拟主机配置
-- server_name指令  
+- 2.基于名称的虚拟主机配置   
 语法：`server_name name;`  
  + name，主机名，可以只有一个名称，也可以由多个名称并列，之间用空格隔开。在name中可以使用通配符，但通配符只能用在由三段字符串组成的名称的首段或尾段，或者由两段字符串组成的名称的尾段。在name中还可以使用正则表达式，并使用“~”作为正则表达式字符串的开始标记。  
 由于server_name指令支持使用通配符和正则表达式两种配置名称的方式，因此在包含有多个虚拟主机的配置文件中，可能会出现一个名称被多个虚拟主机的server_name匹配成功。那么，来自这个名称的请求到底要交给哪个虚拟主机处理呢？Nginx服务器做出以下支付宝：
@@ -219,45 +139,484 @@ a.对于匹配方式的不同，按照以下的优先级选择虚拟主机，排
  + 3.通配符在结尾时匹配server_name成功
  + 4.正则表达式匹配server_name成功
 b.在以上四种匹配方式中，如果server_name被处于同一优先级的匹配方式多次匹配成功，则首次匹配成功的虚拟主机处理请求。
-   
-## 配置location块
-- location指令
-语法：`location [ = | ~ | ~* | ^~ ] uri [ ... ]`  
+
+- 3.server_names_hash_bucket_size  
+语法：`server_names_hash_bucket_size size;`  
+默认：`server_names_hash_bucket_size 32|64|128;`  
+配置块：http、server、location  
+为了提高快速寻找到相应server name的能力，Nginx使用散列表来存储server name。此配置设置了每个散列桶占用的内存大小。
+
+- 4.server_names_hash_max_size  
+语法：`server_names_hash_max_size size;`  
+默认：`server_names_hash_max_size 512;`  
+配置块：http、server、location  
+此配置会影响散列表的冲突率。值越大，消耗的内存就越多，但散列key的冲突率则会降低，检索速度也更快。值越小，消耗的内存就越小，但散列key的冲突率可能增高。  
+
+- 5.重定向主机名称的处理  
+语法：`server_name_in_redirect on | off;`  
+默认：`server_name_in_redirect on;`  
+配置块：http、server、location  
+该配置需要配置server_name使用。在使用on打开时，表示在重定向请求时会使用server_name里配置的每一个主机名代替原先请求中的Host头部，而使用off关闭时，表示在重定向请求时使用请求本身的Host头部。  
+
+- 6.配置location块
+语法：`location [ = | ~ | ~* | ^~ | @] /uri/ {...}`  
+配置块：server    
  + uri，待匹配的请求字符串，可以是不含正则表达式的字符串，也可以是包含有正则表达式的字符串。
  + 方括号里的部分是可选项，用来改变请求字符串与uri的匹配方式。在不添加此选项时，Nginx服务器首先在server块的多个location块中搜索是否有标准uri和请求字符串匹配，如果有多个可以匹配，就记录匹配度最高的一个。然后服务器再用location块中的正则uri和请求字符串匹配，当第一个正则uri匹配成功，结束搜索，并使用这个location块处理此请求；如果正则匹配全部失效，就使用刚才记录的匹配度最高的location块处理此请求。  
    + “=”，用于标准uri前，要求请求字符串与uri严格匹配。如果已经匹配成功，就停止继续向下搜索并立即处理此请求。
    + “~”，用于表示uri包含正则表达式，并且区分大小写。
    + “~*”，用于表示uri包含正则表达式，并且不区分大小写。
-   + “^~”，用于标准uri前，找到匹配度最高的uri后不再继续匹配。
-   
-## 配置请求的根目录
-- root指令
-作用域：http块、server块、location块
+   + “^~”，表示只要前半部分与uri参数匹配即可。
+   + “@”，仅用于Nginx服务内部请求之间的重定向，带有@的location不直接处理用户请求。
+
+### 文件路径的定义  
+- 1.配置请求的根目录   
 语法：`root path;`  
+默认：`root html;`  
+配置块：http、server、location、if  
  + path，Nginx服务器接收到请求以后查找资源的根目录路径。
 
-## 更改location的URI
-- alias指令
-在location块中，用alias指令改变location接收到的URI的请求路径。  
-语法：｀alias path;`  
- + path，修改后的根路径。
+- 2.以alias方式设置资源路径  
+语法：｀alias path;`    
+配置块：location  
+alias也是用来设置文件资源路径的，它与root的不同点主要在于如何解读紧跟location后面的uri参数。例如，如果一个请求的URI是/conf/nginx.conf，用户想访问的文件在/usr/local/nginx/conf/nginx.conf，那么用alias来设置的话如下：  
+```
+location /conf {
+    alias /usr/local/nginx/conf/;
+}
+```  
+如果用root设置如下：  
+```
+location /conf {
+    root /usr/local/nginx/;
+}
+```  
+使用alias时，在URI向实际文件路径的映射过程中，已经把location后配置的/conf丢弃掉，而root则会根据完整的URI请求来映射，这也是alias只能放在location块中的原因。  
  
-## 设置网站的默认首页
-- index指令
+- 3.设置网站的默认首页  
 index指令有两个作用：一是用户在发出请求访问网站时，请求地址可以不写首页名称；二是可以对一个请求，根据请求内容而设置不同的首页。  
-语法：`index file ...;`  
+语法：`index file ...;`
+默认：`index index.html;`  
+配置块：http、server、location    
  + file，可以包含多个文件名，其间使用空格分隔，也可以包含其他变量。 
 
-## 设置网站的错误页面
-- error_page指令
-作用域：http块、server块、location块
-语法：`error_page code ... [=[response]] uri;`  
- + code，要处理的HTTP错误代码。
- + response，可选项，将code指定的错误代码转化为新的错误代码response。
- + uri，错误页面的路径或者网站地址。如果设置为路径，则是以Nginx服务器安装路径下的html目录为根路径的相对蹊径如果设置为网址，刚Nginx服务器会直接访问该网址获取错误页面，并返回给用户端。
+- 4.设置网站的错误页面  
+语法：`error_page code [code...] [= | =answer-code] uri | @named_location;`   
+配置块：http、server、location、if  
+当对于某个请求返回错误码时，如果匹配上了error_page中设置的code，则重定向到新的URI中。例如：  
+```
+error_page 502 503 504 /50x.html;
+error_page 404 = @fetch;
+```
+虽然重定向了URI，但返回的HTTP错误码还是与原来的相同。用户可以通过“=”来更改返回的错误码，例如：  
+```
+error_page 404 =200 /empty.gif;
+```
+也可以不指定确切的返回错误码，而是由重定向后实际处理的真实结果来决定，这时，只要把“=”后面的错误码去掉即可，例如：  
+```
+error_page 404 = /empty.gif;
+```
+如果不想修改URI，只是想让这样的请求重定向到另一个location中进行处理，那么可以这样设置：
+```
+location / {
+    error_page 404 @fallback;
+}
+
+location @fallback {
+    proxy_pass http://backend;
+}
+```
+
+- 5.是否允许递归使用error_page  
+语法：`recursive_error_page [on | off];`  
+默认：`recursive_error_page off;`  
+配置块：http、server、location  
+
+- 6.try_files  
+语法：`try_files path1 [path2] uri;`  
+配置块：server、location  
+尝试按照顺序访问每一个path，如果可以有效的读取，就直接向用户返回这个path对应的文件结束请求，否则继续向下访问。如果所有的path都找不到有效的文件，就重定向到最后的参数uri上。
+
+### 内存及磁盘资源的分配
+- 1.HTTP包体只存储到磁盘文件中  
+语法：`client_body_in_file_only on | clean | off;`  
+默认：`client_body_in_file_only off;`  
+配置块：http、server、location  
+当值为非off时，用户请求中的HTTP包体一律存储到磁盘文件中，即使只有0字节也会存储为文件。当请求结束时，如果配置为on，则这个文件不会被删除（该配置一般用于调试、定位问题），但如果配置为clean，则会删除该文件。  
+
+- 2.HTTP包体尽量写入到一个内存buffer中  
+语法：`client_body_in_single_buffer on | off;`  
+默认：`client_body_in_single_buffer off;`  
+配置块：http、server、location  
+用户请求中的HTTP包体一律存储到内存buffer中。如果HTTP包体的大小超过了client_body_buffer_size设置的值，包体还是会 写入到磁盘文件中。  
+
+- 3.存储HTTP头部的内存buffer大小  
+语法：`client_header_buffer_size size;`  
+默认：`client_header_buffer_size 1k;`  
+配置块：http、server  
+此配置定义了正常情况下Nginx接收用户请求中HTTP header部分（包括HTTP行和HTTP头部）时分配的内存buffer大小。有时，请求中的HTTP header部分可能会超过这个大小，这时large_client_header_buffers定义的buffer将会生效。
+
+- 4.存储超大HTTP头部的内存buffer大小  
+语法：`large_client_header_buffers number size;`  
+默认：`large_client_header_buffers 4 8k;`  
+配置块：http、server  
+此配置定义了Nginx接收一个超大HTTP头部请求的buffer个数和每个buffer的大小。
+
+- 5.存储HTTP包体的内存buffer大小  
+语法：`client_body_buffer_size size;`  
+默认：`client_body_buffer_size 8k/16k;`  
+配置块：http、server、location  
+此配置定义了Nginx接收HTTP包体的内存缓冲区大小。HTTP包体会先接收到指定的这块缓存中，之后才决定是否写入磁盘。  
+**注意** 
+如果用户请求中含有HTTP头部Content-Length，并且其标识的长度小于定义的buffer大小，那么Nginx会自动降低本次请求所使用的内存buffer，以降低内存消耗。  
+
+- 6.HTTP包体的临时存放目录  
+语法：`client_body_temp_path dir-path [ level1 [ level2 [ level3 ]]];`  
+默认：`client_body_temp_path client_body_temp;`  
+配置块：http、server、location  
+在接收HTTP包体时，如果包体的大小大于client_body_buffer_size，则会以一个递增的整数命名并存放到client_body_temp_path指定的目录中。后面跟着的level1、level2、level3是为了防止一个目录下的文件数量太多，从而导致性能下降，因此使用了level参数，这样可以按照临时文件名最多再加三层目录，具体的值代表目录名的位数。例如：  
+`client_body_temp_path /opt/nginx/client_temp 1 2;`  
+如果新上传的HTTP包体使用123456作为临时文件名，就会被存放在这个目录中。  
+`/opt/nginx/client_temp/6/45/123456`  
+
+- 7.connection_pool_size  
+语法：`connection_pool_size size;`  
+默认：`connection_pool_size 256;`  
+配置块：http、server  
+Nginx对于每个建立成功的TCP连接会预先分配一个内存池，上面的size配置项将指定这个内存池的初始大小（即ngx_connection_t结构体中的pool内存池初始大小），用于减少内核对于小块内存的分配次数。需慎重设置，因为更大的size会使服务器消耗的内存增多，而更小的size则会引发更多的内存分配次数。
+
+- 8.request_pool_size  
+语法：`request_pool_size size;`  
+默认：`request_pool_size 4k;`  
+配置块：http、server  
+Ngin开始处理HTTP请求时，将会为每个请求都分配一个内存池，size配置项将指定这个内存池的初始大小（即ngx_http_request_t结构中的pool内存池初始大小），用于减少内核对于小块内存的分配次数。TCP连接关闭时会销毁connection_pool_size指定的连接内存池，HTTP请求结束时会销毁request_pool_size指定的HTTP请求内存池，但它们的创建、销毁时间并不一致，因为一个TCP连接可能被复用于多个HTTP请求。
+  
+### 网络连接的设置  
+- 1.读取HTTP头部的超时时间  
+语法：`client_header_timeout time;`（默认单位：秒）  
+默认：`client_header_timeout 60;`  
+配置块：http、server、location  
+客户端与服务器建立连接后将开始接收HTTP头部，在这个过程中，如果在一个时间间隔内没有读取到客户端发来的字节，则认为超时，并向客户端返回408（“Request timed out”）响应。  
+
+- 2.读取HTTP包体的超时时间  
+语法：`client_body_timeout time;`(默认单位：秒）  
+默认：`client_body_timeout 60;`  
+配置块：http、server、location  
+
+- 3.发送响应的超时时间  
+语法：`send_timeout time;`  
+默认：`send_timeout 60;`  
+配置块：http、server、location  
+Nginx服务器向客户端发送了数据包，但客户端一直没有去接收这个数据包。如果某个连接超过send_timeout定义的超时时间，那么Nginx将会关闭这个连接。  
+
+- 4.reset_timeout_connection  
+语法：`reset_timeout_connection on | off;`  
+默认：`reset_timeout_connection off;`  
+配置块：http、server、location  
+连接超时后将通过向客户端发送RST包来直接重置连接。这个选项打开后，Nginx会在某个连接超时后，不是使用正常情形下的四次握手关闭TCP连接，而是直接向客户发送RST重置包，不再等待用户的应答，直接释放Nginx服务器上关于这个套接字使用的所有缓存。相比正常的关闭方式，它使得服务器避免产生许多处于FIN_WAIT_1、FIN_WAIT_2、FIN_WAIT状态的TCP连接。  
+使用RST重置包关闭连接会带来一些问题，默认情况下不会开启。  
+
+- 5.lingering_close  
+语法：`lingering_close off | on | always;`  
+默认：`lingering_close on;`  
+配置块：http、server、location  
+该配置控制Nginx关闭用户连接的方式。always表示关闭用户连接前必须无条件地处理连接上所有用户发送的数据。off表示关闭连接时完全不管连接上是否已经有准备就绪的来自用户的数据。on是中间值，一般情况下在关闭连接前都会处理连接上的用户发送的数据，除了有些情况下在业务上认定这之后的数据是不必要的。  
+
+- 6.lingering_time  
+语法：`lingering_time time;`  
+默认：`lingering_time 30s;`  
+配置块：http、server、location  
+lingering_close启用后，此配置对于上传大文件很有用。当用户请求的Content-Length大于max_client_body_size配置时，Nginx服务器会立刻向用户发送413（Request entity too large）响应。但是很多客户端可能不管413返回值，仍然持续不断地上传HTTP body，这时，经过了lingering_time设置的时间后，Nginx将不管用户是否仍在上传，都会把连接关闭掉。  
+
+- 7.lingering_timeout  
+语法：`lingering_timeout time;`  
+默认：`lingering_timeout 5s;`  
+配置块：http、server、location  
+lingering_close生效后，在关闭连接前，会检测是否有用户发送的数据到达服务器，如果超过lingering_timeout时间后还没有数据可读，就直接关闭连接；否则，必须在读取完连接缓冲区上的数据并丢弃掉后才会关闭连接。  
+
+- 8.对某些浏览器禁用keepalive功能  
+语法：`keepalive_disable [ msie6 | safari | none ] ...;`  
+默认：keepalive_disable  msie6 safari  
+配置块：http、server、location  
+HTTP请求中的keepalive功能是为了让多个请求复用一个HTTP长连接，这个功能对服务器的性能提高是很有帮助的。但有些浏览器，如IE 6和Safari，它们对于使用keepalive功能的POST请求处理有功能性问题。因此，针对IE 6及其早期版本、Safari浏览器默认是禁用keepalive功能的。
+
+- 9.keepalive超时时间  
+语法：`keepalive_timeout time;`默认单位：秒  
+默认：`keepalive_timeout 75;`  
+配置块：http、server、location  
+一个keepalive连接在闲置超过一定时间后，服务器和浏览器都会去关闭这个连接。  
+
+- 10.一个keepalive长连接上允许承载的请求最大数  
+语法：`keepalive_requests n;`  
+默认：`keepalive_requests 100; ` 
+配置块：http、server、location  
+一个keepalive连接上默认最多只能发送100个请求。
+   
+- 11.tcp_nodelay  
+语法：`tcp_nodelay on | off;`  
+默认：`tcp_nodelay on;`  
+配置块：http、server、location  
+确定对keepalive连接是否使用TCP_NODELAY选项。
+
+- 12.tcp_nopush  
+语法：`tcp_nopush on | off;`  
+默认：`tcp_nopush off;`  
+配置块：http、server、location  
+在打开sendfile选项时，确定是否开启FreeBSD系统上的TCP_NOPUSH或Linux系统上的TCP_CORK功能。打开tcp_nopush后，将会在发送响应时把整个响应包头放到一个TCP包中发送。
+
+### MIME类型的设置
+- 1.MIME type与文件扩展的映射  
+语法：`type {...};`  
+配置块：http、server、location  
+定义MIME type到文件扩展名的映射。多个扩展名可以映射到同一个MIME type。  
+- 2.默认MIME type  
+语法：`default_type MIME-type;`  
+默认：`default_type text/plain;`  
+配置块：http、server、location  
+当找不到相应的MIME type与文件扩展名之间的映射时，使用默认的MIME type作为HTTP header中的Content-Type。
+
+- 3.types_hash_bucket_size  
+语法：`types_hash_bucket_size size;`  
+默认：`types_hash_bucket_size 32|64|128;`  
+配置块：http、server、location  
+为了快速寻找到相应MIME type，Nginx使用散列表来存储MIME type与文件扩展名。types_hash_bucket_size 设置了每个散列桶占用的内存大小。
+
+- 4.types_hash_max_size  
+语法：`types_hash_max_size size;`  
+默认：`types_hash_max_size 1024;`  
+配置块：http、server、location  
+types_hash_max_size影响散列表的冲突率。types_hash_max_size越大，就会消耗更多的内存，但散列key的冲突率会降低，检索速度就更快。types_hash_max_size越小，消耗的内存就越小，但散列key的冲突率可能上升。
+
+### 对客户端请求的限制
+- 1.按HTTP方法名限制用户请求  
+语法：`limit_except method ... {...}`  
+配置块：location  
+Nginx通过limit_except后面指定的方法名来限制用户请求。方法名可取值包括：GET、HEAD、POST、PUT、DELETE、MKCOL、COPY、MOVE、OPTIONS、PROPFIND、PROPPATCH、LOCK、UNLOCK或者PATCH。例如：  
+```
+limit_except GET {
+    allow 192.168.1.0/32;
+    deny  all;
+}
+```
+**注意**允许GET方法就意味着也允许HEAD方法。因此，上面这段代码表示的是禁止GET方法和HEAD方法，但其他HTTP方法是允许的。
+
+- 2.HTTP请求包体的最大值  
+语法：`client_max_body_size size;`  
+默认：`client_max_body_size 1m;`  
+配置块：http、server、location  
+浏览器在发送含有较大HTTP包体的请求时，其头部会有一个Content-Length字段，client_max_body_size是用来限制Content-Length所示值的大小的。因此，这个限制包体的配置非常有用处，因为不用等Nginx接收完所有的HTTP包体—这有可能消耗很长时间—就可以告诉用户请求过大不被接受。例如，用户试图上传一个10GB的文件，Nginx在收完包头后，发现Content-Length超过client_max_body_size定义的值，就直接发送413 ("Request Entity Too Large")响应给客户端。
+
+- 3.对请求的限速  
+语法：`limit_rate speed; ` 
+默认：`limit_rate 0;`  
+配置块：http、server、location、if  
+此配置是对客户端请求限制每秒传输的字节数。speed可以多种单位，默认参数为0，表示不限速。  
+针对不同的客户端，可以用$ limit_rate参数执行不同的限速策略。例如：
+```
+server {
+ if ($slow) {
+  set $limit_rate  4k;
+ }
+}
+```
+
+- 4.limit_rate_after  
+语法：`limit_rate_after time;`  
+默认：`limit_rate_after 1m;`  
+配置块：http、server、location、if  
+此配置表示Nginx向客户端发送的响应长度超过limit_rate_after后才开始限速。例如：  
+```
+limit_rate_after 1m;  
+limit_rate 100k;
+```  
+
+###　文件操作的优化
+－ 1.sendfile系统调用  
+语法：`sendfile on | off;`  
+默认：`sendfile off;`  
+配置块：http、server、location
+可以启用Linux上的sendfile系统调用来发送文件，它减少了内核态与用户态之间的两次内存复制，这样就会从磁盘中读取文件后直接在内核态发送到网卡设备，提高了发送文件的效率。
+
+- 2.AIO系统调用  
+语法：`aio on | off;`  
+默认：`aio off;`  
+配置块：http、server、location  
+此配置项表示是否在FreeBSD或Linux系统上启用内核级别的异步文件I/O功能。注意，它与sendfile功能是互斥的。
+
+- 3.directio  
+语法：`directio size | off;`  
+默认：`directio off;`  
+配置块：http、server、location  
+此配置项在FreeBSD和Linux系统上使用O_DIRECT选项去读取文件，缓冲区大小为size，通常对大文件的读取速度有优化作用。注意，它与sendfile功能是互斥的。
+
+- 4.directio_alignment  
+语法：`directio_alignment size;`  
+默认：`directio_alignment 512;`  
+配置块：http、server、location  
+它与directio配合使用，指定以directio方式读取文件时的对齐方式。一般情况下，512B已经足够了，但针对一些高性能文件系统，如Linux下的XFS文件系统，可能需要设置到4KB作为对齐方式。
+
+- 5.打开文件缓存  
+语法：`open_file_cache max = N [inactive = time] | off;`  
+默认：`open_file_cache off;`  
+配置块：http、server、location
+文件缓存会在内存中存储以下3种信息：  
+文件句柄、文件大小和上次修改时间。  
+已经打开过的目录结构。  
+没有找到的或者没有权限操作的文件信息。  
+这样，通过读取缓存就减少了对磁盘的操作。  
+该配置项后面跟3种参数。  
+  + max：表示在内存中存储元素的最大个数。当达到最大限制数量后，将采用LRU（Least Recently Used）算法从缓存中淘汰最近最少使用的元素。  
+  + inactive：表示在inactive指定的时间段内没有被访问过的元素将会被淘汰。默认时间为60秒。  
+  + off：关闭缓存功能。  
+
+- 6.是否缓存打开文件错误的信息  
+语法：`open_file_cache_errors on | off;`  
+默认：`open_file_cache_errors off;`  
+配置块：http、server、location  
+此配置项表示是否在文件缓存中缓存打开文件时出现的找不到路径、没有权限等错误信息。  
+
+- 7.不被淘汰的最小访问次数  
+语法：`open_file_cache_min_uses number;`  
+默认：`open_file_cache_min_uses 1;`  
+配置块：http、server、location
+它与open_file_cache中的inactive参数配合使用。如果在inactive指定的时间段内，访问次数超过了open_file_cache_min_uses指定的最小次数，那么将不会被淘汰出缓存。
+
+- 8.检验缓存中元素有效性的频率
+语法：`open_file_cache_valid time;`  
+默认：`open_file_cache_valid 60s;`  
+配置块：http、server、location
+默认为每60秒检查一次缓存中的元素是否仍有效。
+
+### 对客户端请求的特殊处理
+- 1.忽略不合法的HTTP头部  
+语法：`ignore_invalid_headers on | off;`  
+默认：`ignore_invalid_headers on;`  
+配置块：http、server  
+如果将其设置为off，那么当出现不合法的HTTP头部时，Nginx会拒绝服务，并直接向用户发送400（Bad Request）错误。如果将其设置为on，则会忽略此HTTP头部。
+
+- 2.HTTP头部是否允许下画线  
+语法：`underscores_in_headers on | off;`  
+默认：`underscores_in_headers off;`  
+配置块：http、server  
+默认为off，表示HTTP头部的名称中不允许带“_”（下画线）。
+
+- 3.对If-Modified-Since头部的处理策略  
+语法：`if_modified_since [off|exact|before];`  
+默认：`if_modified_since exact;`  
+配置块：http、server、location  
+出于性能考虑，Web浏览器一般会在客户端本地缓存一些文件，并存储当时获取的时间。这样，下次向Web服务器获取缓存过的资源时，就可以用If-Modified-Since头部把上次获取的时间捎带上，而if_modified_since将根据后面的参数决定如何处理If-Modified-Since头部。  
+相关参数说明如下。  
+  + off：表示忽略用户请求中的If-Modified-Since头部。这时，如果获取一个文件，那么会正常地返回文件内容。HTTP响应码通常是200。
+   + exact：将If-Modified-Since头部包含的时间与将要返回的文件上次修改的时间做精确比较，如果没有匹配上，则返回200和文件的实际内容，如果匹配上，则表示浏览器缓存的文件内容已经是最新的了，没有必要再返回文件从而浪费时间与带宽了，这时会返回304 Not Modified，浏览器收到后会直接读取自己的本地缓存。
+  + before：是比exact更宽松的比较。只要文件的上次修改时间等于或者早于用户请求中的If-Modified-Since头部的时间，就会向客户端返回304 Not Modified。
+
+- 4.文件未找到时是否记录到error日志  
+语法：`log_not_found on | off;`  
+默认：`log_not_found on;`  
+配置块：http、server、location  
+此配置项表示当处理用户请求且需要访问文件时，如果没有找到文件，是否将错误日志记录到error.log文件中。这仅用于定位问题。
+
+- 5.merge_slashes  
+语法：`merge_slashes on | off;`  
+默认：`merge_slashes on;`  
+配置块：http、server、location  
+此配置项表示是否合并相邻的“/”，例如，//test///a.txt，在配置为on时，会将其匹配为location /test/a.txt；如果配置为off，则不会匹配，URI将仍然是//test///a.txt。
+
+- 6.DNS解析地址  
+语法：`resolver address ...;`  
+配置块：http、server、location  
+设置DNS名字解析服务器的地址，例如：  
+`resolver 127.0.0.1 192.0.2.1;`
+
+
+## 正常运行的配置项
+- 1.配置Nginx进程PID存放路径   
+配置块：全局块  
+语法：`pid file;`  
+默认：`pid logs/nginx.pid;`  
+ + file，指定存放路径和文件名称。可以是绝对路径，也可以是以Nginx安装目录为根目录的相对路径。  
+
+- 2.配置运行Nginx服务器用户（组）  
+配置块：全局块  
+语法： `user user [group];`  
+ + user，指定可以运行Nginx服务器的用户。
+ + group，可选项，指定可以运行Nginx服务器的用户组。  
+只有被设置的用户或者用户组才有权限启动Nginx进程，如果是其他用户尝试启动Nginx进程，将会报错。  
+如果希望所有用户都可以启动Nginx进程，有两种方法：  
+(1).将此指令行注释掉：  
+`#user user [group];`  
+(2).将用户（和用户组）设置为nobody：  
+`user nobody nobody;`  
+这也是user指令的默认配置。  
+
+- 3.配置文件的引入   
+配置块：任意地方  
+语法：`include file;`  
+ + file，要引入的配置文件，支持相对路径。
+
+- 4.配置错误日志的存放路径    
+配置块：全局块、http、server、location  
+语法：`error_log file | stderr [debug | info | notice | warn | error | crit | alert | emerg];` 
+
+- 5.更改一个worker进程的最大打开文件数限制  
+语法：`worker_rlimit_nofile number;`  
+如果没设置的话，这个值为操作系统的限制。设置后你的操作系统和Nginx可以处理比“ulimit -a”更多的文件，所以把这个值设高，这样Nginx就不会有“too many open files”问题了。
+
+- 6.限制信号队列  
+语法：`worker_rlimit_sigpending number;`  
+设置每个用户发往Nginx的信号队列的大小。当某个用户的信号队列满了，这个用户再发送的信号量会被丢掉。
+
+
+##　自定义服务日志
+- access_log指令  
+配置块：http、server、location  
+语法：`access_log path [format [buffer=size]];`  
+ + path，配置服务日志的文件存放的路径和名称。
+ + format，可选项，自定义服务日志的格式字符串，也可以通过“格式串的名称”使用log_format指令定义好的格式。
+ + size，配置临时存放日志的内存缓存区大小。  
+默认配置：`access_log log/access.log combined;`  
+其中，combined为log_format指令默认定义的日志格式字符串的名称。  
+如果要取消记录服务日志的功能，则使用：`access_log off;`  
+
+- log_format指令  
+配置块：http  
+语法：`log_format name string ...;`  
+ + name，格式字符串的名称，默认的名字为combined。
+ + string，服务日志的格式字符串。
+
+## 配置允许sendfile方式传输文件
+- sendfile指令  
+配置块：http、server、location  
+语法：`sendfile on | off;`  
+默认值为off。  
+
+- sendfile_max_chunk指令  
+配置块：http、server、location  
+语法：`sendfile_max_chunk size;`  
+ + size，如果大于0，Nginx进程的每个worker process每次调用sendfile()传输的数据量最大不能超过这个值；如果设置为0，则无限制。默认值为0。
+  
+## 配置连接超时时间
+- keepalive_timeout指令  
+配置块：http、server、location  
+语法：`keepalive_timeout timeout [header_timeout];`  
+ + timeout，服务器端对连接的保持时间，默认值为75s。
+ + header_timeout，可选项，在应答报文头的Keep-Alive域设置超时时间：“Keep-Alive:timeout=header_timeout”。
+ 
+## 单连接请求数上限
+- keepalive_requests指令  
+配置块：server、location  
+Nginx服务器端和用户端建立会话连接后，用户端通过此连接发送请求。此指令用于限制用户通过某一连接向Nginx服务器发送请求的次数。  
+语法：`keepalive_request number;`  
+默认设置为100。  
+ 
+
+   
+
+   
+
 
 ## 基于IP配置Nginx的访问权限
-作用域：http块、server块、location块
+配置块：http、server、location
 - allow指令
 用于设置允许访问Nginx的客户端IP  
 语法：`allow address | CIDR | all;`  
@@ -327,7 +686,7 @@ index指令有两个作用：一是用户在发出请求访问网站时，请求
 
 # Nginx服务器的代理服务
 ## 正向代理
-作用域： http块、server块、location块  
+配置块： http、server、location  
 
 - resolver 指令  
 该指令用于指定DNS服务器的IP地址  
@@ -347,7 +706,7 @@ index指令有两个作用：一是用户在发出请求访问网站时，请求
 Tips: 在server块中，不要出现server_name指令，即不要设置虚拟主机的名称或IP。  
 
 ## 反向代理
-作用域： http块、server块、location块  
+配置块： http、server、location  
 
 ### 反向代理的基本设置的21个指令
 - 1.proxy_pass指令  
@@ -769,7 +1128,7 @@ location /fetch/
 # Nginx服务器的邮件服务
 ## Nginx邮件服务的配置的12个指令
 - 1.listen指令  
-作用域：server块  
+配置块：server  
 该指令用于配置邮件服务器监听的IP地址和端口。  
 语法： `listen address:port;`
  + address，邮件服务器监听的IP地址，支持通配符“*”、主机名称。
@@ -782,12 +1141,12 @@ location /fetch/
 如果mail块中配置了多个虚拟主机，该指令只能在server块中配置；如果只有一个虚拟主机，该指令可以在mail块中配置。
 
 - 3.protocol指令  
-作用域：server块  
+配置块：server  
 该指令用于配置当前虚拟主机支持的协议。  
 语法： `protocol imap | pop3 | smtp;`  
 
 - 4.so_keepalive指令
-作用域：mail块或server块  
+配置块：mail、server  
 该指令用于配置后端代理服务器是否启用“TCP keepalive”模式来处理Nginx邮件服务器转发的客户端连接。  
 语法： `so_keepalive on | off;`  
 默认情况下，该指令配置为off。
@@ -795,14 +1154,14 @@ location /fetch/
 - 5.配置POP3协议
 用于配置POP3协议的指令有两个：pop3_auth指令和pop3_capabilities指令。  
  + pop3_auth指令用于配置POP3认证用户的方式。  
-作用域：mail块或server块  
+配置块：mail、server  
 语法： `pop3_auth method ...'`  
 method支持以下配置：
      + plain，使用USER/PASS、AUTH PLAIN、AUTH LOGIN方法认证。这也是邮件服务器提供POP3协议支持时最基本的认证方式，也是Nginx邮件服务的默认配置。
      + apop，使用APOP方法认证。该方法需要客户端提供的密码是非加密密码。
      + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
  + pop3_capabilities指令用于配置POP3协议的扩展功能。  
- 作用域：mail块或server块  
+ 配置块：mail、server  
 语法： `pop3_capabilities extension ...;`  
      + extension，要加入POP3协议的扩展。  
 默认配置：`pop3_capabilities TOP USER UIDL;`  
@@ -810,14 +1169,14 @@ method支持以下配置：
 - 6.配置IMAP协议
 用于配置IMAP协议的指令包括imap_auth指令、imap_capabilities指令和imap_client_buffer指令三个。前两个指令和配置POP3协议时使用的两个用法是相同的。  
  + imap_auth指令用于配置POP3认证用户的方式。
-作用域：mail块或server块  
+配置块：mail、server  
 语法： `imap_auth method ...;`  
 method支持以下配置：  
      + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
      + login，使用AUTH=LOGIN方法进行认证。
      + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
  + imap_capabilities指令用于配置IMAP协议的扩展功能。
-作用域：mail块或server块    
+配置块：mail、server    
 语法： `imap_capabilities extension ...;`  
      + extension，要加入IMAP协议的扩展。  
 默认配置：`imap_capabilities IMAP4 IMAP4revl UIDPLUS;` 
@@ -829,7 +1188,7 @@ method支持以下配置：
 - 7.配置SMTP协议
 用于配置SMTP协议的指令包括smtp_auth指令和smtp_capabilities指令。它们的用法也和前面两个协议中的基本相同。  
  + smtp_auth指令用于配置SMTP认证用户的方式。  
-作用域：mail块或server块  
+配置块：mail、server  
 语法： `smtp_auth method ...;`  
 method支持以下配置：  
      + plain，使用AUTH=PLAIN方法认证。仍然是Nginx邮件服务提供IMAP协议的默认设置。
@@ -837,18 +1196,18 @@ method支持以下配置：
      + cram-md5，使用AUTH CRAM-MD5方法认证。该方法也需要客户端提供的密码是非加密密码。
 默认配置：`smtp_auth plain;`  
  + smtp_capabilities指令用于配置SMTP协议的扩展功能。  
-作用域：mail块或server块  
+配置块：mail、server  
 语法： `smtp_capabilities extension ...;`  
      + extension，要加入SMTP协议的扩展。
 
 - 8.auth_http指令  
-作用域：mail块或server块
+配置块：mail、server
 用于配置Nginx提供邮件服务时的用于HTTP认证的服务器地址。  
 语法： `auth_http URL;`  
  + URL，HTTP认证服务器的地址。  
 
 - 9.auth_http_header指令  
-作用域：mail块或server块  
+配置块：mail、server  
 通过该指令可以在Nginx服务器向HTTP认证服务器发起认证请求时，向请求头添加指定的头域。  
 例：`auth_http_header X-Auth-Key "secret_string";`  
 
@@ -858,7 +1217,7 @@ method支持以下配置：
  + time，超时时间，默认60s。一般该时间设置不超过75s。
 
 - 11.proxy_buffer指令  
-作用域：mail块或server块  
+配置块：mail、server  
 该指令用于配置了后端代理服务器（组）的情况，用来设置Nginx服务器代理缓存的大小，一般为平台的一个内存页的大小。  
 默认配置：`proxy_buffer 4k|8k;`  
 
